@@ -75,7 +75,7 @@ public class RecordsTab_26_10_25 extends ScrollView implements Refreshable_26_10
 
         page.addView(Ui_26_10_25.text(activity, "记录", 28, Ui_26_10_25.INK, true));
         page.addView(Ui_26_10_25.hint(activity,
-                "只记录慢一拍看到的前台切换；不读取聊天内容，不上传。"));
+                "只记录本机看到的前台切换；不读聊天内容，不上传。"));
 
         // 月历
         LinearLayout calendarCard = Ui_26_10_25.card(activity);
@@ -138,6 +138,10 @@ public class RecordsTab_26_10_25 extends ScrollView implements Refreshable_26_10
         savedLine = Ui_26_10_25.hint(activity, "");
         savedLine.setPadding(0, Ui_26_10_25.dp(activity, 12), 0, 0);
         statsCard.addView(savedLine);
+        TextView explain = Ui_26_10_25.hint(activity,
+                "打开=进入次数；提醒=复查出现；在应用内=实际前台时长（不含确认页）。");
+        explain.setPadding(0, Ui_26_10_25.dp(activity, 8), 0, 0);
+        statsCard.addView(explain);
         Ui_26_10_25.add(page, statsCard, 10);
 
         // 当日分应用
@@ -187,7 +191,6 @@ public class RecordsTab_26_10_25 extends ScrollView implements Refreshable_26_10
         weekCard.addView(Ui_26_10_25.hint(activity, "本周每天打开受控应用的次数。"));
         weekBars = new WeekBarsView_26_10_25(activity);
         weekCard.addView(weekBars);
-        Ui_26_10_25.add(page, weekCard, 22);
 
         // 时间花在哪
         LinearLayout ringCard = Ui_26_10_25.card(activity);
@@ -197,7 +200,26 @@ public class RecordsTab_26_10_25 extends ScrollView implements Refreshable_26_10
         ringCard.addView(ringChart);
         ringLegend = Ui_26_10_25.vertical(activity);
         ringCard.addView(ringLegend);
-        Ui_26_10_25.add(page, ringCard, 12);
+
+        LinearLayout trendsBox = Ui_26_10_25.vertical(activity);
+        Ui_26_10_25.add(trendsBox, weekCard, 0);
+        Ui_26_10_25.add(trendsBox, ringCard, 12);
+        trendsBox.setVisibility(android.view.View.GONE);
+        LinearLayout trendsHead = Ui_26_10_25.horizontal(activity);
+        trendsHead.setPadding(0, Ui_26_10_25.dp(activity, 22), 0, 0);
+        trendsHead.addView(Ui_26_10_25.section(activity, "趋势"),
+                new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        TextView trendsToggle = Ui_26_10_25.action(activity, "展开", () -> {
+        });
+        trendsToggle.setOnClickListener(v -> {
+            boolean show = trendsBox.getVisibility() != LinearLayout.VISIBLE;
+            trendsBox.setVisibility(show ? LinearLayout.VISIBLE : LinearLayout.GONE);
+            trendsToggle.setText(show ? "收起" : "展开");
+        });
+        trendsHead.addView(trendsToggle);
+        page.addView(trendsHead);
+        page.addView(trendsBox, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         TextView more = Ui_26_10_25.action(activity, "完整记录在「我的 → 全部记录」",
                 () -> Ui_26_10_25.toast(activity, "打开底部「我的」，点「全部记录」查看每一次会话"));
@@ -295,10 +317,10 @@ public class RecordsTab_26_10_25 extends ScrollView implements Refreshable_26_10
         leavesValue.setText(String.valueOf(stats.leaves));
         timeValue.setText(StatsMath_26_10_25.duration(stats.foregroundMs));
         if (stats.savedEstMs > 0) {
-            savedLine.setText("按复查页离开时的时长估算，少用约 "
-                    + StatsMath_26_10_25.duration(stats.savedEstMs) + "（估算，非实测）");
+            savedLine.setText("复查页离开的估算：少用约 "
+                    + StatsMath_26_10_25.duration(stats.savedEstMs));
         } else {
-            savedLine.setText("省时估算只统计在复查页选择“现在离开”的会话。");
+            savedLine.setText("只在复查页选“现在离开”时估算少用时间。");
         }
 
         renderDayApps(db.dayApps(begin, end));

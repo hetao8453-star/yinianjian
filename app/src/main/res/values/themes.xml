@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Base.Theme.慢一拍" parent="Theme.Material3.Light.NoActionBar">
+    <style name="Base.Theme.一念间" parent="Theme.Material3.Light.NoActionBar">
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
@@ -10,5 +10,5 @@
         <item name="colorOnSurface">#252C28</item>
     </style>
 
-    <style name="Theme.慢一拍" parent="Base.Theme.慢一拍" />
+    <style name="Theme.一念间" parent="Base.Theme.一念间" />
 </resources>

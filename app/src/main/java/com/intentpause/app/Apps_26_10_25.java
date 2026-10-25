@@ -19,6 +19,7 @@ import java.util.Set;
 public final class Apps_26_10_25 {
     private static final String PREFS = "selected_apps";
     private static final String DEFAULTS = "app_defaults";
+    private static final String SENSITIVE = "sensitive_apps";
     public static final int DEFAULT_MINUTES = 10;
     private static List<ResolveInfo> cache;
 
@@ -76,6 +77,26 @@ public final class Apps_26_10_25 {
 
     public static void setSelected(Context context, String pkg, boolean on) {
         prefs(context).edit().putBoolean(pkg, on).apply();
+    }
+
+    public static boolean sensitive(Context context, String pkg) {
+        return context.getSharedPreferences(SENSITIVE, Context.MODE_PRIVATE)
+                .getBoolean(pkg, false);
+    }
+
+    public static void setSensitive(Context context, String pkg, boolean on) {
+        context.getSharedPreferences(SENSITIVE, Context.MODE_PRIVATE)
+                .edit().putBoolean(pkg, on).apply();
+    }
+
+    public static java.util.List<String> sensitivePackages(Context context) {
+        java.util.List<String> result = new java.util.ArrayList<>();
+        android.content.SharedPreferences p =
+                context.getSharedPreferences(SENSITIVE, Context.MODE_PRIVATE);
+        for (java.util.Map.Entry<String, ?> e : p.getAll().entrySet()) {
+            if (e.getValue() instanceof Boolean && (Boolean) e.getValue()) result.add(e.getKey());
+        }
+        return result;
     }
 
     public static int defaultMinutes(Context context, String pkg) {

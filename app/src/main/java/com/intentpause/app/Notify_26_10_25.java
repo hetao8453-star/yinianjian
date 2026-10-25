@@ -42,7 +42,7 @@ public final class Notify_26_10_25 {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("慢一拍：提醒服务没有开启")
+                .setContentTitle("一念间：提醒服务没有开启")
                 .setContentText("点此到无障碍设置重新开启。开机或安装新包后，系统可能需要你重新确认。")
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setAutoCancel(true)
@@ -64,7 +64,7 @@ public final class Notify_26_10_25 {
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("提醒页暂时没有显示出来")
                 .setContentText("你刚打开了 " + (appLabel == null ? "一个应用" : appLabel)
-                        + "。点此查看慢一拍的状态，或稍后重新打开。")
+                        + "。点此查看一念间的状态，或稍后重新打开。")
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setAutoCancel(true)
                 .setContentIntent(pending);

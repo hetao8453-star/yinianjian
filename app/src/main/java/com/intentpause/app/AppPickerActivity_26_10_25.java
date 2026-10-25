@@ -32,6 +32,7 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
     private final List<ResolveInfo> filtered = new ArrayList<>();
     private String term = "";
     private int shown;
+    private boolean sensitiveMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,11 +45,13 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
         root.setLayoutParams(rootParams);
 
+        sensitiveMode = "sensitive".equals(getIntent().getStringExtra("mode"));
         LinearLayout header = Ui_26_10_25.horizontal(this);
         header.setPadding(Ui_26_10_25.dp(this, 12), Ui_26_10_25.dp(this, 8),
                 Ui_26_10_25.dp(this, 12), Ui_26_10_25.dp(this, 6));
         header.addView(Ui_26_10_25.iconButton(this, R.drawable.ic_back, 44, this::finish));
-        header.addView(Ui_26_10_25.text(this, "选择应用", 19, Ui_26_10_25.INK, true),
+        header.addView(Ui_26_10_25.text(this,
+                        sensitiveMode ? "敏感应用" : "选择应用", 19, Ui_26_10_25.INK, true),
                 new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         selectedCount = Ui_26_10_25.text(this, "", 12, Ui_26_10_25.MUTED, false);
         selectedCount.setPadding(0, 0, Ui_26_10_25.dp(this, 10), 0);
@@ -56,6 +59,14 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
         TextView done = Ui_26_10_25.action(this, "完成", this::finish);
         header.addView(done);
         root.addView(header);
+
+        if (sensitiveMode) {
+            TextView note = Ui_26_10_25.hint(this,
+                    "这些应用打开时不会停一下，也不记录。适合银行、密码、支付类。");
+            note.setPadding(Ui_26_10_25.dp(this, 16), 0, Ui_26_10_25.dp(this, 16),
+                    Ui_26_10_25.dp(this, 8));
+            root.addView(note);
+        }
 
         LinearLayout searchRow = Ui_26_10_25.horizontal(this);
         searchRow.setBackground(Ui_26_10_25.roundStroke(this, Color.WHITE, Ui_26_10_25.LINE, 14));
@@ -126,7 +137,7 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
             String label = info.loadLabel(getPackageManager()).toString();
             if (!term.isEmpty() && !label.toLowerCase(Locale.ROOT).contains(term)
                     && !pkg.toLowerCase(Locale.ROOT).contains(term)) continue;
-            if (Apps_26_10_25.selected(this, pkg)) selected.add(info);
+            if (isSelected(pkg)) selected.add(info);
             else others.add(info);
         }
         filtered.addAll(selected);
@@ -182,10 +193,10 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
         row.addView(box, new LinearLayout.LayoutParams(0,
                 LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         CheckBox check = new CheckBox(this);
-        check.setChecked(Apps_26_10_25.selected(this, pkg));
-        check.setContentDescription("监测" + label);
+        check.setChecked(isSelected(pkg));
+        check.setContentDescription((sensitiveMode ? "标记" : "监测") + label);
         check.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            Apps_26_10_25.setSelected(this, pkg, isChecked);
+            setSelected(pkg, isChecked);
             updateCount();
         });
         row.addView(check, new LinearLayout.LayoutParams(
@@ -194,7 +205,19 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
         return row;
     }
 
+    private boolean isSelected(String pkg) {
+        return sensitiveMode ? Apps_26_10_25.sensitive(this, pkg)
+                : Apps_26_10_25.selected(this, pkg);
+    }
+
+    private void setSelected(String pkg, boolean on) {
+        if (sensitiveMode) Apps_26_10_25.setSensitive(this, pkg, on);
+        else Apps_26_10_25.setSelected(this, pkg, on);
+    }
+
     private void updateCount() {
-        selectedCount.setText("已选 " + Apps_26_10_25.selectedPackages(this).size() + " 个");
+        int count = sensitiveMode ? Apps_26_10_25.sensitivePackages(this).size()
+                : Apps_26_10_25.selectedPackages(this).size();
+        selectedCount.setText((sensitiveMode ? "已标记 " : "已选 ") + count + " 个");
     }
 }

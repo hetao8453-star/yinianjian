@@ -45,13 +45,13 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
 
         LinearLayout titleRow = Ui_26_10_25.horizontal(activity);
         ImageView mascot = new ImageView(activity);
-        mascot.setImageResource(R.drawable.ic_launcher_foreground);
+        mascot.setImageResource(R.drawable.mascot_xiaohuan);
         titleRow.addView(mascot, new LinearLayout.LayoutParams(
                 Ui_26_10_25.dp(activity, 44), Ui_26_10_25.dp(activity, 44)));
         LinearLayout titleBox = Ui_26_10_25.vertical(activity);
         titleBox.setPadding(Ui_26_10_25.dp(activity, 10), 0, 0, 0);
-        titleBox.addView(Ui_26_10_25.text(activity, "慢一拍", 28, Ui_26_10_25.INK, true));
-        titleBox.addView(Ui_26_10_25.text(activity, "打开之前，慢一拍。", 14, Ui_26_10_25.MUTED, false));
+        titleBox.addView(Ui_26_10_25.text(activity, "一念间", 28, Ui_26_10_25.INK, true));
+        titleBox.addView(Ui_26_10_25.text(activity, "打开之前，想想这次。", 14, Ui_26_10_25.MUTED, false));
         titleRow.addView(titleBox);
         Ui_26_10_25.add(page, titleRow, 0);
 
@@ -83,7 +83,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         Ui_26_10_25.add(page, statusCard, 22);
 
         LinearLayout sectionRow = Ui_26_10_25.horizontal(activity);
-        TextView section = Ui_26_10_25.section(activity, "已控制的应用");
+        TextView section = Ui_26_10_25.section(activity, "受控应用");
         sectionRow.addView(section, new LinearLayout.LayoutParams(0,
                 LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         TextView manage = Ui_26_10_25.action(activity, "管理", () ->
@@ -116,7 +116,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         statusDot.setBackground(Ui_26_10_25.round(activity,
                 enabled ? Ui_26_10_25.GREEN : Ui_26_10_25.WARN, 999));
         statusTitle.setText(enabled ? "提醒已开启" : "提醒待开启");
-        statusButton.setText(enabled ? "查看运行状态" : "去开启无障碍服务");
+        statusButton.setText(enabled ? "查看状态" : "开启提醒");
         statusButton.setBackground(Ui_26_10_25.ripple(activity,
                 enabled ? Ui_26_10_25.GREEN_SOFT : Ui_26_10_25.GREEN, 14));
         statusButton.setTextColor(enabled ? Ui_26_10_25.GREEN : Color.WHITE);
@@ -132,13 +132,11 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         long connected = db.lastServiceWall("connected");
         long disconnected = db.lastServiceWall("disconnected");
         if (connected == 0) {
-            statusLine.setText("还没有成功连接过无障碍服务。开启后，打开受控应用才会停一下。");
+            statusLine.setText("开启后，打开受控应用才会先停一下。");
         } else if (disconnected > connected) {
-            statusLine.setText("上次连接 " + StatsMath_26_10_25.monthDay(connected) + " "
-                    + StatsMath_26_10_25.clock(connected) + "；服务随后断开，可能需要重新开启。");
+            statusLine.setText("服务断开过，建议重新开启。");
         } else {
-            statusLine.setText("本次连接于 " + StatsMath_26_10_25.monthDay(connected) + " "
-                    + StatsMath_26_10_25.clock(connected) + "。");
+            statusLine.setText("已连接 · " + StatsMath_26_10_25.clock(connected));
         }
 
         long begin = StatsMath_26_10_25.startOfDay(System.currentTimeMillis());
@@ -157,7 +155,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
             LinearLayout empty = Ui_26_10_25.card(activity);
             empty.addView(Ui_26_10_25.text(activity, "还没有选择应用", 16, Ui_26_10_25.INK, true));
             empty.addView(Ui_26_10_25.hint(activity,
-                    "选一个最常无意识打开的应用试试。打开它时，会先停一下。"));
+                    "选一个最常无意识打开的应用。打开它时，会先停一下。"));
             Ui_26_10_25.add(appList, empty, 8);
             return;
         }

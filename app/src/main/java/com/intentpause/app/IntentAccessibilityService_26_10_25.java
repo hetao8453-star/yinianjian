@@ -127,6 +127,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         refreshInputMethods();
         registerScreenReceiver();
         db.serviceEvent("connected", "无障碍服务已连接", System.currentTimeMillis());
+        KeepAliveService_26_10_26.ensure(this);
         restoreState();
     }
 
@@ -183,7 +184,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
             return;
         }
 
-        if (!selected(pkg)) return;
+        if (!monitored(pkg)) return;
         if (activePackage != null) finishSession("switched", 0, false);
         if (interactive()) startSession(pkg, now);
     }
@@ -218,7 +219,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
             handler.removeCallbacks(leaveHide);
         }
         if (activePackage == null) {
-            if (selected(pkg) && interactive()) startSession(pkg, now);
+            if (monitored(pkg) && interactive()) startSession(pkg, now);
             return;
         }
         if (waitingForChoice) {
@@ -246,7 +247,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
 
     private void onScreenAvailable(long now) {
         if (activePackage == null) {
-            if (foregroundPackage != null && selected(foregroundPackage) && interactive()) {
+            if (foregroundPackage != null && monitored(foregroundPackage) && interactive()) {
                 startSession(foregroundPackage, now);
             }
             return;
@@ -480,11 +481,13 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
     }
 
     @Override
-    public void onContinue() {
+    public void onContinue(int minutes) {
         long now = System.currentTimeMillis();
-        db.event(sessionId, activePackage, "review_continue", purpose, detail, null, now);
+        minutes = Math.max(1, Math.min(180, minutes));
+        db.event(sessionId, activePackage, "review_continue", purpose, detail,
+                String.valueOf(minutes), now);
         db.bumpContinue(sessionId);
-        allow(durationMinutes, false, false);
+        allow(minutes, false, false);
     }
 
     @Override
@@ -625,6 +628,10 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
     private boolean selected(String pkg) {
         SharedPreferences prefs = getSharedPreferences("selected_apps", MODE_PRIVATE);
         return prefs.getBoolean(pkg, false);
+    }
+
+    private boolean monitored(String pkg) {
+        return selected(pkg) && !Apps_26_10_25.sensitive(this, pkg);
     }
 
     private boolean interactive() {

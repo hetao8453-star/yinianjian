@@ -39,7 +39,7 @@ public final class PromptOverlay_26_10_25 {
 
         void onUnsureRelax();
 
-        void onContinue();
+        void onContinue(int minutes);
 
         void onChangePurpose();
 
@@ -77,9 +77,9 @@ public final class PromptOverlay_26_10_25 {
         detail = savedDetail == null ? "" : savedDetail;
         if (!ensureView()) return;
         LinearLayout content = Ui_26_10_25.vertical(context);
-        content.addView(header(pkg, label));
+        content.addView(headerWithClose(pkg, label, () -> listener.onDecline()));
         Ui_26_10_25.add(content, Ui_26_10_25.title(context, "这次打开，想做什么？"), 22);
-        Ui_26_10_25.add(content, Ui_26_10_25.subtitle(context, "选一个目的，再选时长。想休息也可以。"), 10);
+        Ui_26_10_25.add(content, Ui_26_10_25.subtitle(context, "选一个目的，再选时长。"), 10);
 
         LinearLayout rowA = new LinearLayout(context);
         rowA.setOrientation(LinearLayout.HORIZONTAL);
@@ -93,16 +93,16 @@ public final class PromptOverlay_26_10_25 {
         rowB.addView(purposeCard("还没想清楚", () -> listener.onPurpose("还没想清楚")), weight(context));
         Ui_26_10_25.add(content, rowB, 12);
 
-        Button emergency = Ui_26_10_25.ghost(context, "应急使用 3 分钟");
+        Button emergency = Ui_26_10_25.button(context, "应急使用 3 分钟", false);
         emergency.setOnClickListener(v -> listener.onEmergency());
-        Ui_26_10_25.add(content, emergency, 22);
+        Ui_26_10_25.add(content, emergency, 24);
 
-        Button decline = Ui_26_10_25.ghost(context, "先不打开");
+        Button decline = Ui_26_10_25.button(context, "先不打开", false);
         decline.setOnClickListener(v -> listener.onDecline());
-        Ui_26_10_25.add(content, decline, 4);
+        Ui_26_10_25.add(content, decline, 10);
 
         TextView trust = Ui_26_10_25.text(context,
-                "只在本机显示，不读取屏幕内容，也不上传。", 12, Ui_26_10_25.MUTED, false);
+                "只在本机显示，不读屏，不联网。", 12, Ui_26_10_25.MUTED, false);
         Ui_26_10_25.add(content, trust, 18);
         showPage(content);
     }
@@ -116,12 +116,12 @@ public final class PromptOverlay_26_10_25 {
             detail = currentDetail();
             listener.onBack(detail);
         }));
-        Ui_26_10_25.add(content, Ui_26_10_25.title(context, "这次打算用多久？"), 20);
+        Ui_26_10_25.add(content, Ui_26_10_25.title(context, "用多久？"), 20);
         Ui_26_10_25.add(content, Ui_26_10_25.subtitle(context,
-                purpose == null ? "点一下就进入。" : "目的：" + purpose + "。点一下就进入。"), 10);
+                purpose == null ? "点一下就进入。" : "目的：" + purpose + "。"), 10);
 
         Ui_26_10_25.add(content, Ui_26_10_25.text(context,
-                "具体要做什么？可不填", 14, Ui_26_10_25.MUTED, false), 22);
+                "想做什么？可不填", 14, Ui_26_10_25.MUTED, false), 20);
         detailInput = new EditText(context);
         detailInput.setTextSize(15);
         detailInput.setTextColor(Ui_26_10_25.INK);
@@ -193,9 +193,15 @@ public final class PromptOverlay_26_10_25 {
             detail = currentDetail();
             listener.onDuration(minutes, detail);
         });
+        custom.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) scrollIntoView(customRow);
+        });
+        detailInput.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) scrollIntoView(detailInput);
+        });
         Ui_26_10_25.add(content, customRow, 4);
 
-        Button decline = Ui_26_10_25.ghost(context, "先不打开");
+        Button decline = Ui_26_10_25.button(context, "先不打开", false);
         decline.setOnClickListener(v -> listener.onDecline());
         Ui_26_10_25.add(content, decline, 12);
         showPage(content);
@@ -226,7 +232,7 @@ public final class PromptOverlay_26_10_25 {
         LinearLayout content = Ui_26_10_25.vertical(context);
         content.addView(header(pkg, label));
         Ui_26_10_25.add(content, Ui_26_10_25.title(context,
-                emergency ? "3 分钟到了" : "时间到了，现在想怎么选？"), 22);
+                emergency ? "3 分钟到了" : "时间到了，想怎么选？"), 22);
 
         LinearLayout card = Ui_26_10_25.card(context);
         Ui_26_10_25.add(card, Ui_26_10_25.text(context, "刚才的目的", 13,
@@ -235,12 +241,63 @@ public final class PromptOverlay_26_10_25 {
         if (detail != null && !detail.isEmpty()) remembered += "：" + detail;
         Ui_26_10_25.add(card, Ui_26_10_25.text(context, remembered, 17, Ui_26_10_25.INK, true), 8);
         Ui_26_10_25.add(card, Ui_26_10_25.hint(context,
-                "本次已过去 " + elapsedMinutes + " 分钟。数据只记在本机。"), 10);
+                "已过去 " + elapsedMinutes + " 分钟。"), 10);
         Ui_26_10_25.add(content, card, 20);
 
-        Button keep = Ui_26_10_25.button(context, "继续 " + plannedMinutes + " 分钟", true);
-        keep.setOnClickListener(v -> listener.onContinue());
-        Ui_26_10_25.add(content, keep, 26);
+        Ui_26_10_25.add(content, Ui_26_10_25.text(context, "继续多久？", 14,
+                Ui_26_10_25.MUTED, false), 22);
+        LinearLayout reviewDurations = new LinearLayout(context);
+        reviewDurations.setOrientation(LinearLayout.HORIZONTAL);
+        int[] reviewOptions = {3, 10, 30};
+        for (int minutes : reviewOptions) {
+            Button pill = Ui_26_10_25.pill(context, minutes + " 分钟", minutes == plannedMinutes);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0,
+                    Ui_26_10_25.dp(context, 48), 1f);
+            lp.setMargins(Ui_26_10_25.dp(context, 3), 0, Ui_26_10_25.dp(context, 3), 0);
+            pill.setLayoutParams(lp);
+            pill.setOnClickListener(v -> listener.onContinue(minutes));
+            reviewDurations.addView(pill);
+        }
+        Ui_26_10_25.add(content, reviewDurations, 8);
+
+        LinearLayout reviewCustom = new LinearLayout(context);
+        reviewCustom.setOrientation(LinearLayout.HORIZONTAL);
+        EditText reviewInput = new EditText(context);
+        reviewInput.setTextSize(14);
+        reviewInput.setTextColor(Ui_26_10_25.INK);
+        reviewInput.setHintTextColor(Ui_26_10_25.MUTED);
+        reviewInput.setHint("自定义分钟数（1–180）");
+        reviewInput.setSingleLine(true);
+        reviewInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        reviewInput.setImeOptions(EditorInfo.IME_ACTION_DONE);
+        reviewInput.setBackground(Ui_26_10_25.roundStroke(context, Color.WHITE, Ui_26_10_25.LINE, 14));
+        reviewInput.setPadding(Ui_26_10_25.dp(context, 14), Ui_26_10_25.dp(context, 10),
+                Ui_26_10_25.dp(context, 14), Ui_26_10_25.dp(context, 10));
+        reviewCustom.addView(reviewInput, new LinearLayout.LayoutParams(0,
+                Ui_26_10_25.dp(context, 48), 1f));
+        Button reviewUse = Ui_26_10_25.button(context, "使用", false);
+        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
+                Ui_26_10_25.dp(context, 80), Ui_26_10_25.dp(context, 48));
+        rlp.setMargins(Ui_26_10_25.dp(context, 8), 0, 0, 0);
+        reviewCustom.addView(reviewUse, rlp);
+        reviewUse.setOnClickListener(v -> {
+            int minutes;
+            try {
+                minutes = Integer.parseInt(reviewInput.getText().toString().trim());
+            } catch (Exception e) {
+                minutes = 0;
+            }
+            if (minutes < 1 || minutes > 180) {
+                android.widget.Toast.makeText(context, "请输入 1–180 分钟",
+                        android.widget.Toast.LENGTH_SHORT).show();
+                return;
+            }
+            listener.onContinue(minutes);
+        });
+        reviewInput.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) scrollIntoView(reviewCustom);
+        });
+        Ui_26_10_25.add(content, reviewCustom, 6);
 
         Button change = Ui_26_10_25.button(context, "换个目的", false);
         change.setOnClickListener(v -> listener.onChangePurpose());
@@ -307,7 +364,7 @@ public final class PromptOverlay_26_10_25 {
             }
             lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
                     | WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED;
-            lp.setTitle("慢一拍");
+            lp.setTitle("一念间");
             windows.addView(root, lp);
             ViewCompat.requestApplyInsets(root);
             WindowInsetsControllerCompat controller = ViewCompat.getWindowInsetsController(root);
@@ -329,6 +386,31 @@ public final class PromptOverlay_26_10_25 {
         content.setTranslationY(Ui_26_10_25.dp(context, 10));
         content.animate().alpha(1f).translationY(0f).setDuration(150).start();
         scroll.scrollTo(0, 0);
+    }
+
+    private void scrollIntoView(View target) {
+        if (scroll == null) return;
+        target.postDelayed(() -> {
+            if (scroll != null) scroll.smoothScrollTo(0, Math.max(0, target.getTop()));
+        }, 180);
+    }
+
+    private View headerWithClose(String pkg, String label, Runnable onClose) {
+        LinearLayout row = new LinearLayout(context);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        View header = header(pkg, label);
+        row.addView(header, new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        ImageView close = new ImageView(context);
+        close.setImageResource(R.drawable.ic_close);
+        close.setColorFilter(Ui_26_10_25.MUTED);
+        close.setPadding(Ui_26_10_25.dp(context, 10), Ui_26_10_25.dp(context, 10),
+                Ui_26_10_25.dp(context, 10), Ui_26_10_25.dp(context, 10));
+        close.setOnClickListener(v -> onClose.run());
+        row.addView(close, new LinearLayout.LayoutParams(
+                Ui_26_10_25.dp(context, 40), Ui_26_10_25.dp(context, 40)));
+        return row;
     }
 
     private View header(String pkg, String label) {

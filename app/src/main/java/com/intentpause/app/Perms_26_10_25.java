@@ -17,6 +17,19 @@ public final class Perms_26_10_25 {
     }
 
     public static boolean accessibilityEnabled(Context context) {
+        // 先看系统安全设置；AccessibilityManager 在服务刚连接时可能有短暂延迟。
+        try {
+            int enabled = android.provider.Settings.Secure.getInt(
+                    context.getContentResolver(),
+                    android.provider.Settings.Secure.ACCESSIBILITY_ENABLED, 0);
+            String list = android.provider.Settings.Secure.getString(
+                    context.getContentResolver(),
+                    android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            String component = new android.content.ComponentName(context,
+                    IntentAccessibilityService_26_10_25.class).flattenToString();
+            if (enabled == 1 && list != null && list.contains(component)) return true;
+        } catch (RuntimeException ignored) {
+        }
         AccessibilityManager manager =
                 (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
         if (manager == null) return false;

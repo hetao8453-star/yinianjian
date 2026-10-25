@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">慢一拍</string>
-    <string name="accessibility_description">只识别你选择的应用何时进入前台，在本机显示一次目的确认与到时复查。不读取屏幕文字，不上传记录。</string>
+    <string name="app_name">一念间</string>
+    <string name="accessibility_description">只识别你选择的应用何时进入前台，显示一次目的确认与到时复查。不读取屏幕内容，不联网。</string>
 </resources>

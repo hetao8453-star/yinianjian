@@ -26,6 +26,7 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
     private final StatusRefs notification;
     private final StatusRefs battery;
     private final StatusRefs autostart;
+    private final StatusRefs protection;
     private final TextView accessibilityAction;
     private final TextView notificationAction;
     private final TextView batteryAction;
@@ -46,8 +47,7 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         addView(page, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
         page.addView(Ui_26_10_25.text(activity, "我的", 28, Ui_26_10_25.INK, true));
-        page.addView(Ui_26_10_25.hint(activity,
-                "慢一拍只在本机工作：不需要联网，也不读取屏幕内容。"));
+        page.addView(Ui_26_10_25.hint(activity, "只在本机工作：不联网，不读屏。"));
 
         LinearLayout statusCard = Ui_26_10_25.card(activity);
         statusCard.addView(Ui_26_10_25.text(activity, "运行状态", 15, Ui_26_10_25.INK, true));
@@ -70,6 +70,13 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         autostart = statusRefs(row4, "自启动 / 后台高耗电");
         rowAction(row4, "去设置", () -> Perms_26_10_25.openAutostartSettings(activity));
 
+        LinearLayout row5 = statusRow(statusCard);
+        protection = statusRefs(row5, "后台保护");
+        rowAction(row5, "启动", () -> {
+            KeepAliveService_26_10_26.ensure(activity);
+            refresh();
+        });
+
         lastLine = Ui_26_10_25.hint(activity, "");
         lastLine.setPadding(0, Ui_26_10_25.dp(activity, 12), 0, 0);
         statusCard.addView(lastLine);
@@ -77,6 +84,8 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
 
         Ui_26_10_25.add(page, linkRow("全部记录", "每个应用每一次的选择",
                 new Intent(activity, AppRecordActivity_26_10_25.class)), 16);
+        Ui_26_10_25.add(page, linkRow("敏感应用", "打开时不弹确认页，也不记录",
+                new Intent(activity, AppPickerActivity_26_10_25.class).putExtra("mode", "sensitive")), 10);
         Ui_26_10_25.add(page, linkRow("权限说明", "每一项权限与“为什么可能每次都要重开”",
                 new Intent(activity, PermissionGuideActivity_26_10_25.class)), 10);
 
@@ -105,9 +114,9 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         Ui_26_10_25.add(page, logCard, 10);
 
         LinearLayout about = Ui_26_10_25.card(activity);
-        about.addView(Ui_26_10_25.text(activity, "关于慢一拍", 15, Ui_26_10_25.INK, true));
+        about.addView(Ui_26_10_25.text(activity, "关于一念间", 15, Ui_26_10_25.INK, true));
         about.addView(Ui_26_10_25.hint(activity,
-                "v2 本地验证版 · 不联网 · 不读取屏幕内容 · 记录只在本机。\n"
+                "v4 本地验证版 · 不联网 · 不读屏 · 记录只在本机。\n"
                         + "当前是自用验证包，不是公开发布版本。"));
         Ui_26_10_25.add(page, about, 20);
 
@@ -190,21 +199,23 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         if (activity == null) return;
         boolean accessibilityOn = Perms_26_10_25.accessibilityEnabled(activity);
         update(accessibility, accessibilityOn,
-                accessibilityOn ? "已开启，能监听所选应用的前台切换" : "未开启，提醒不会工作");
+                accessibilityOn ? "已开启" : "未开启，提醒不会工作");
         accessibilityAction.setText(accessibilityOn ? "设置" : "去开启");
 
         boolean notificationsOn = Perms_26_10_25.notificationsGranted(activity);
         update(notification, notificationsOn,
-                notificationsOn ? "已允许（仅兜底提醒与开机提示）" : "未允许；不影响确认页，只少兜底提醒");
+                notificationsOn ? "已允许（仅兜底与开机提示）" : "未允许；不影响确认页");
         notificationAction.setText(notificationsOn ? "设置" : "去开启");
 
         boolean batteryOn = Perms_26_10_25.ignoringBatteryOptimizations(activity);
         update(battery, batteryOn,
-                batteryOn ? "已允许后台不被清理" : "未设置；iQOO 可能更早停掉服务");
+                batteryOn ? "已允许，减少被清理" : "未设置，可能更早被清理");
         batteryAction.setText(batteryOn ? "设置" : "去设置");
 
         update(autostart, false,
-                "不是应用权限，需要在系统设置里手动允许（见“权限说明”）");
+                "需在系统设置手动允许");
+        update(protection, KeepAliveService_26_10_26.running,
+                KeepAliveService_26_10_26.running ? "前台服务运行中，降低被清理概率" : "未运行；打开 App 会尝试启动");
 
         IntentDb_26_10_25 db = IntentDb_26_10_25.get(activity);
         long connected = db.lastServiceWall("connected");
