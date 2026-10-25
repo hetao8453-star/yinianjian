@@ -52,6 +52,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
     private long leftWall;
     private long foregroundMs;
     private long fgEnterWall;
+    private long lastTargetSeenWall;
     private String foregroundPackage;
     private boolean screenOn = true;
     private boolean receiverRegistered;
@@ -88,7 +89,11 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
                 handler.postDelayed(this, wait);
                 return;
             }
-            if (activePackage.equals(foregroundPackage) && interactive()) showReview();
+            if (!interactive()) return;
+            long now = System.currentTimeMillis();
+            boolean inTarget = activePackage.equals(foregroundPackage)
+                    || (lastTargetSeenWall > 0 && now - lastTargetSeenWall <= 3000);
+            if (inTarget) showReview();
         }
     };
 
@@ -100,6 +105,16 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
             if (now - leftWall <= GRACE) return;
             if (!activePackage.equals(foregroundPackage)) {
                 finishSession(waitingForChoice ? "abandoned" : "left_natural", 0, false);
+            }
+        }
+    };
+
+    private final Runnable leaveHide = new Runnable() {
+        @Override
+        public void run() {
+            if (activePackage != null && !activePackage.equals(foregroundPackage)
+                    && overlay != null) {
+                overlay.hide();
             }
         }
     };
@@ -137,6 +152,8 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         }
 
         if (activePackage != null && activePackage.equals(pkg)) {
+            lastTargetSeenWall = now;
+            handler.removeCallbacks(leaveHide);
             if (waitingForChoice) {
                 leftWall = 0;
                 if (overlay != null && !overlay.isShowing()) showCurrentOverlay();
@@ -196,6 +213,10 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
     // ---------------- 事件与状态 ----------------
 
     private void sameForeground(String pkg, long now) {
+        if (activePackage != null && activePackage.equals(pkg)) {
+            lastTargetSeenWall = now;
+            handler.removeCallbacks(leaveHide);
+        }
         if (activePackage == null) {
             if (selected(pkg) && interactive()) startSession(pkg, now);
             return;
@@ -215,10 +236,11 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         if (leftWall == 0) {
             leftWall = now;
             pauseForeground(now);
-            handler.removeCallbacks(dueCheck);
             handler.postDelayed(graceCheck, GRACE + 100);
         }
-        if (overlay != null) overlay.hide();
+        // 广告/过渡页会在目标应用内闪一下；延迟隐藏，目标很快回来时不打断确认页。
+        handler.removeCallbacks(leaveHide);
+        handler.postDelayed(leaveHide, 300);
         persist();
     }
 
@@ -245,7 +267,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         label = Apps_26_10_25.label(this, pkg);
         purpose = null;
         detail = "";
-        durationMinutes = 10;
+        durationMinutes = Apps_26_10_25.defaultMinutes(this, pkg);
         emergency = false;
         waitingForChoice = true;
         review = false;
@@ -257,6 +279,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         leftWall = 0;
         foregroundMs = 0;
         fgEnterWall = 0;
+        lastTargetSeenWall = now;
         handler.removeCallbacks(dueCheck);
         handler.removeCallbacks(graceCheck);
         db.event(sessionId, activePackage, "prompt_shown", null, null, null, now);
@@ -318,7 +341,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         if (review) {
             showReview();
         } else if (page == 2 && purpose != null) {
-            overlay.showDuration(activePackage, label, purpose, detail);
+            overlay.showDuration(activePackage, label, purpose, detail, durationMinutes);
         } else if (page == 3) {
             overlay.showUnsure(activePackage, label, durationMinutes);
         } else {
@@ -335,12 +358,13 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         }
         handler.removeCallbacks(dueCheck);
         handler.removeCallbacks(graceCheck);
+        handler.removeCallbacks(leaveHide);
         overlay.hide();
         activePackage = null;
         label = null;
         purpose = null;
         detail = "";
-        durationMinutes = 10;
+        durationMinutes = Apps_26_10_25.DEFAULT_MINUTES;
         emergency = false;
         waitingForChoice = false;
         review = false;
@@ -399,7 +423,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         db.event(sessionId, activePackage, "purpose_chosen", purpose, detail, null, now);
         page = 2;
         persist();
-        overlay.showDuration(activePackage, label, purpose, detail);
+        overlay.showDuration(activePackage, label, purpose, detail, durationMinutes);
     }
 
     @Override
@@ -426,6 +450,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
     public void onDuration(int minutes, String typedDetail) {
         long now = System.currentTimeMillis();
         detail = typedDetail == null ? "" : typedDetail;
+        minutes = Math.max(1, Math.min(180, minutes));
         db.updatePurpose(sessionId, purpose, detail);
         db.event(sessionId, activePackage, "duration_chosen", purpose, detail,
                 String.valueOf(minutes), now);
@@ -543,6 +568,9 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         foregroundMs = s.foregroundMs;
         foregroundPackage = s.foreground;
         page = s.page;
+        if (activePackage != null && activePackage.equals(foregroundPackage)) {
+            lastTargetSeenWall = System.currentTimeMillis();
+        }
         db.serviceEvent("restore", "恢复会话 " + activePackage, System.currentTimeMillis());
         if (waitingForChoice) {
             handler.postDelayed(() -> {

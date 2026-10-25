@@ -47,6 +47,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(root);
         Ui_26_10_25.applyInsets(root);
         showTab(0);
+        if (savedInstanceState == null && !Perms_26_10_25.accessibilityEnabled(this)) {
+            Ui_26_10_25.toast(this, "先开启无障碍服务，慢一拍才能在你打开应用时停一下");
+            root.postDelayed(() -> {
+                if (!Perms_26_10_25.accessibilityEnabled(this)) {
+                    Perms_26_10_25.openAccessibilitySettings(this);
+                }
+            }, 1200);
+        }
     }
 
     @Override

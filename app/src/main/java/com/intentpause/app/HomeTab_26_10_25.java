@@ -1,17 +1,19 @@
 package com.intentpause.app;
 
 import android.content.Intent;
+import android.text.InputType;
 import android.graphics.Color;
-import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.Switch;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
 
 import java.util.List;
 
@@ -100,7 +102,8 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         LinearLayout tip = Ui_26_10_25.card(activity);
         tip.addView(Ui_26_10_25.text(activity, "怎么工作", 15, Ui_26_10_25.INK, true));
         tip.addView(Ui_26_10_25.hint(activity,
-                "默认 10 分钟后复查；短暂离开不超过 1 分钟，原计时不变。想休息也是正当选择。"));
+                "每个应用可以单独设置默认时长（3/10/30 或自定义）；到时如果还在应用内会复查；"
+                        + "短暂离开不超过 1 分钟，原计时不变。"));
         Ui_26_10_25.add(page, tip, 26);
 
         refresh();
@@ -190,29 +193,86 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         textBox.setPadding(Ui_26_10_25.dp(activity, 12), 0, 0, 0);
         textBox.addView(Ui_26_10_25.text(activity, Apps_26_10_25.label(activity, pkg),
                 16, Ui_26_10_25.INK, true));
-        textBox.addView(Ui_26_10_25.text(activity, "每次打开先确认 · 默认 10 分钟",
+        textBox.addView(Ui_26_10_25.text(activity,
+                "默认 " + Apps_26_10_25.defaultMinutes(activity, pkg) + " 分钟 · 点按修改",
                 12, Ui_26_10_25.MUTED, false));
         row.addView(textBox, new LinearLayout.LayoutParams(0,
                 LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
-        Switch toggle = new Switch(activity);
-        toggle.setChecked(Apps_26_10_25.selected(activity, pkg));
-        ColorStateList track = new ColorStateList(
-                new int[][]{{android.R.attr.state_checked}, new int[]{}},
-                new int[]{Ui_26_10_25.GREEN, Color.rgb(217, 222, 217)});
-        toggle.setTrackTintList(track);
-        ColorStateList thumb = new ColorStateList(
-                new int[][]{{android.R.attr.state_checked}, new int[]{}},
-                new int[]{Color.WHITE, Color.WHITE});
-        toggle.setThumbTintList(thumb);
+        Toggle_26_10_25 toggle = new Toggle_26_10_25(activity);
+        toggle.setChecked(Apps_26_10_25.selected(activity, pkg), false);
         toggle.setContentDescription("监测" + Apps_26_10_25.label(activity, pkg));
-        toggle.setOnCheckedChangeListener((buttonView, checked) -> {
-            Apps_26_10_25.setSelected(activity, pkg, checked);
-            toggle.post(this::refresh);
+        toggle.setOnToggleRequested(next -> {
+            if (next) {
+                Apps_26_10_25.setSelected(activity, pkg, true);
+                toggle.post(this::refresh);
+            } else {
+                confirmRemove(pkg, toggle);
+            }
         });
         row.addView(toggle, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT, Ui_26_10_25.dp(activity, 48)));
-        row.setOnClickListener(v -> toggle.setChecked(!toggle.isChecked()));
+                Ui_26_10_25.dp(activity, 48), Ui_26_10_25.dp(activity, 28)));
+        row.setOnClickListener(v -> showDefaultDialog(pkg));
         return row;
+    }
+
+    private void confirmRemove(String pkg, Toggle_26_10_25 toggle) {
+        String name = Apps_26_10_25.label(activity, pkg);
+        new AlertDialog.Builder(activity)
+                .setTitle("不再监测？")
+                .setMessage("之后打开“" + name + "”时不会再先停一下；已有记录保留。")
+                .setNegativeButton("继续监测", (dialog, which) -> toggle.setChecked(true, true))
+                .setPositiveButton("不再监测", (dialog, which) -> {
+                    Apps_26_10_25.setSelected(activity, pkg, false);
+                    refresh();
+                })
+                .show();
+    }
+
+    private void showDefaultDialog(String pkg) {
+        String name = Apps_26_10_25.label(activity, pkg);
+        int current = Apps_26_10_25.defaultMinutes(activity, pkg);
+        String[] items = {"3 分钟", "10 分钟", "30 分钟", "自定义…"};
+        int checked = current == 3 ? 0 : current == 10 ? 1 : current == 30 ? 2 : 3;
+        new AlertDialog.Builder(activity)
+                .setTitle("“" + name + "”默认使用多久？")
+                .setSingleChoiceItems(items, checked, (dialog, which) -> {
+                    dialog.dismiss();
+                    if (which == 3) askCustomDefault(pkg, current);
+                    else {
+                        Apps_26_10_25.setDefaultMinutes(activity, pkg, which == 0 ? 3 : which == 1 ? 10 : 30);
+                        refresh();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void askCustomDefault(String pkg, int current) {
+        EditText input = new EditText(activity);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setHint("1–180 分钟");
+        input.setText(String.valueOf(current));
+        input.setPadding(Ui_26_10_25.dp(activity, 20), Ui_26_10_25.dp(activity, 8),
+                Ui_26_10_25.dp(activity, 20), Ui_26_10_25.dp(activity, 8));
+        new AlertDialog.Builder(activity)
+                .setTitle("自定义默认时长")
+                .setView(input)
+                .setNegativeButton("取消", null)
+                .setPositiveButton("保存", (dialog, which) -> {
+                    int minutes;
+                    try {
+                        minutes = Integer.parseInt(input.getText().toString().trim());
+                    } catch (Exception e) {
+                        minutes = 0;
+                    }
+                    if (minutes < 1 || minutes > 180) {
+                        Ui_26_10_25.toast(activity, "请输入 1–180 分钟");
+                        return;
+                    }
+                    Apps_26_10_25.setDefaultMinutes(activity, pkg, minutes);
+                    refresh();
+                })
+                .show();
     }
 }

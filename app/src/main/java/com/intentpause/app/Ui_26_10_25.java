@@ -43,6 +43,15 @@ public final class Ui_26_10_25 {
     private Ui_26_10_25() {
     }
 
+    public static int blend(int from, int to, float fraction) {
+        float f = Math.max(0f, Math.min(1f, fraction));
+        int a = (int) (Color.alpha(from) + (Color.alpha(to) - Color.alpha(from)) * f);
+        int r = (int) (Color.red(from) + (Color.red(to) - Color.red(from)) * f);
+        int g = (int) (Color.green(from) + (Color.green(to) - Color.green(from)) * f);
+        int b = (int) (Color.blue(from) + (Color.blue(to) - Color.blue(from)) * f);
+        return Color.argb(a, r, g, b);
+    }
+
     public static int dp(Context c, float value) {
         return (int) (value * c.getResources().getDisplayMetrics().density + 0.5f);
     }

@@ -1,6 +1,7 @@
 package com.intentpause.app;
 
 import android.content.Context;
+import android.os.Build;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
@@ -21,6 +22,7 @@ import android.widget.TextView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 /** 由无障碍服务创建的确认覆盖层：单个窗口内换页，避免重建导致的滚动跳变。 */
 public final class PromptOverlay_26_10_25 {
@@ -105,7 +107,8 @@ public final class PromptOverlay_26_10_25 {
         showPage(content);
     }
 
-    public void showDuration(String pkg, String label, String purpose, String savedDetail) {
+    public void showDuration(String pkg, String label, String purpose, String savedDetail,
+                             int defaultMinutes) {
         detail = savedDetail == null ? "" : savedDetail;
         if (!ensureView()) return;
         LinearLayout content = Ui_26_10_25.vertical(context);
@@ -137,9 +140,9 @@ public final class PromptOverlay_26_10_25 {
                 Ui_26_10_25.MUTED, false), 20);
         LinearLayout durations = new LinearLayout(context);
         durations.setOrientation(LinearLayout.HORIZONTAL);
-        int[] options = {5, 10, 20};
+        int[] options = {3, 10, 30};
         for (int minutes : options) {
-            Button pill = Ui_26_10_25.pill(context, minutes + " 分钟", minutes == 10);
+            Button pill = Ui_26_10_25.pill(context, minutes + " 分钟", minutes == defaultMinutes);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0,
                     Ui_26_10_25.dp(context, 48), 1f);
             lp.setMargins(Ui_26_10_25.dp(context, 3), 0, Ui_26_10_25.dp(context, 3), 0);
@@ -152,6 +155,45 @@ public final class PromptOverlay_26_10_25 {
             durations.addView(pill);
         }
         Ui_26_10_25.add(content, durations, 8);
+
+        LinearLayout customRow = new LinearLayout(context);
+        customRow.setOrientation(LinearLayout.HORIZONTAL);
+        customRow.setGravity(Gravity.CENTER_VERTICAL);
+        customRow.setPadding(0, Ui_26_10_25.dp(context, 10), 0, 0);
+        EditText custom = new EditText(context);
+        custom.setTextSize(14);
+        custom.setTextColor(Ui_26_10_25.INK);
+        custom.setHintTextColor(Ui_26_10_25.MUTED);
+        custom.setHint("自定义分钟数（1–180）");
+        custom.setSingleLine(true);
+        custom.setInputType(InputType.TYPE_CLASS_NUMBER);
+        custom.setImeOptions(EditorInfo.IME_ACTION_DONE);
+        custom.setBackground(Ui_26_10_25.roundStroke(context, Color.WHITE, Ui_26_10_25.LINE, 14));
+        custom.setPadding(Ui_26_10_25.dp(context, 14), Ui_26_10_25.dp(context, 10),
+                Ui_26_10_25.dp(context, 14), Ui_26_10_25.dp(context, 10));
+        customRow.addView(custom, new LinearLayout.LayoutParams(0,
+                Ui_26_10_25.dp(context, 48), 1f));
+        Button useCustom = Ui_26_10_25.button(context, "使用", false);
+        LinearLayout.LayoutParams ucLp = new LinearLayout.LayoutParams(
+                Ui_26_10_25.dp(context, 80), Ui_26_10_25.dp(context, 48));
+        ucLp.setMargins(Ui_26_10_25.dp(context, 8), 0, 0, 0);
+        customRow.addView(useCustom, ucLp);
+        useCustom.setOnClickListener(v -> {
+            int minutes;
+            try {
+                minutes = Integer.parseInt(custom.getText().toString().trim());
+            } catch (Exception e) {
+                minutes = 0;
+            }
+            if (minutes < 1 || minutes > 180) {
+                android.widget.Toast.makeText(context, "请输入 1–180 分钟",
+                        android.widget.Toast.LENGTH_SHORT).show();
+                return;
+            }
+            detail = currentDetail();
+            listener.onDuration(minutes, detail);
+        });
+        Ui_26_10_25.add(content, customRow, 4);
 
         Button decline = Ui_26_10_25.ghost(context, "先不打开");
         decline.setOnClickListener(v -> listener.onDecline());
@@ -240,23 +282,36 @@ public final class PromptOverlay_26_10_25 {
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
                 Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
                 Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
-                scroll.setPadding(0, 0, 0, ime.bottom);
+                Insets cutout = insets.getInsets(WindowInsetsCompat.Type.displayCutout());
+                int top = Math.max(bars.top, cutout.top) + Ui_26_10_25.dp(context, 8);
+                int bottom = Math.max(Math.max(bars.bottom, cutout.bottom), ime.bottom)
+                        + Ui_26_10_25.dp(context, 8);
+                v.setPadding(Math.max(bars.left, cutout.left), top,
+                        Math.max(bars.right, cutout.right), bottom);
                 return insets;
             });
             WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                     WindowManager.LayoutParams.MATCH_PARENT,
                     WindowManager.LayoutParams.MATCH_PARENT,
                     WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                            | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                            | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                     PixelFormat.TRANSLUCENT);
             lp.gravity = Gravity.TOP;
+            if (Build.VERSION.SDK_INT >= 30) lp.setFitInsetsTypes(0);
+            if (Build.VERSION.SDK_INT >= 28) {
+                lp.layoutInDisplayCutoutMode =
+                        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+            }
             lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
                     | WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED;
             lp.setTitle("慢一拍");
             windows.addView(root, lp);
             ViewCompat.requestApplyInsets(root);
+            WindowInsetsControllerCompat controller = ViewCompat.getWindowInsetsController(root);
+            if (controller != null) controller.setAppearanceLightStatusBars(true);
             return true;
         } catch (RuntimeException e) {
             root = null;

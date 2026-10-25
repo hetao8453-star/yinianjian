@@ -102,6 +102,20 @@ public class PermissionGuideActivity_26_10_25 extends AppCompatActivity {
                 Perms_26_10_25.openAutostartSettings(this)));
         Ui_26_10_25.add(list, autostart, 10);
 
+        LinearLayout safety = Ui_26_10_25.card(this);
+        safety.addView(sectionTitle("安全边界"));
+        safety.addView(body("慢一拍没有联网权限，不读取屏幕内容、聊天记录、通知或剪贴板；"
+                + "只记录你选择的应用的打开、目的与时长。锁屏/息屏时不显示确认页。"
+                + "它用到的无障碍能力只取前台应用包名与窗口切换，不用来读取别的应用内容。"));
+        Ui_26_10_25.add(list, safety, 10);
+
+        LinearLayout killed = Ui_26_10_25.card(this);
+        killed.addView(sectionTitle("彻底关掉后台后为什么要重新开"));
+        killed.addView(body("从最近任务里强制停止应用会同时关掉无障碍服务；部分系统或省电策略也会把已开启的无障碍判为无效。"
+                + "这是 Android 的系统行为，App 不能自己重新打开无障碍。"
+                + "下次启动慢一拍时，如果检测到无障碍未开启，会直接跳到系统设置，方便你重开一次。"));
+        Ui_26_10_25.add(list, killed, 10);
+
         LinearLayout why = Ui_26_10_25.card(this);
         why.addView(sectionTitle("为什么可能“每次都要重新开”"));
         why.addView(body("常见原因有三种，运行记录里能看到最近一次连接/断开时间：\n"

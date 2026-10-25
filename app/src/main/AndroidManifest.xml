@@ -49,6 +49,7 @@
             android:name=".IntentAccessibilityService_26_10_25"
             android:exported="true"
             android:label="慢一拍 · 应用使用提示"
+            android:stopWithTask="false"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />

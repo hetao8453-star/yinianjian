@@ -18,6 +18,8 @@ import java.util.Set;
 /** 可启动应用列表与"需要停一下"的应用选择。选择状态沿用旧版的 SharedPreferences，避免升级丢数据。 */
 public final class Apps_26_10_25 {
     private static final String PREFS = "selected_apps";
+    private static final String DEFAULTS = "app_defaults";
+    public static final int DEFAULT_MINUTES = 10;
     private static List<ResolveInfo> cache;
 
     private Apps_26_10_25() {
@@ -74,6 +76,16 @@ public final class Apps_26_10_25 {
 
     public static void setSelected(Context context, String pkg, boolean on) {
         prefs(context).edit().putBoolean(pkg, on).apply();
+    }
+
+    public static int defaultMinutes(Context context, String pkg) {
+        return context.getSharedPreferences(DEFAULTS, Context.MODE_PRIVATE)
+                .getInt(pkg, DEFAULT_MINUTES);
+    }
+
+    public static void setDefaultMinutes(Context context, String pkg, int minutes) {
+        context.getSharedPreferences(DEFAULTS, Context.MODE_PRIVATE)
+                .edit().putInt(pkg, Math.max(1, Math.min(180, minutes))).apply();
     }
 
     /** 已选择且仍安装的应用，按名称排序。 */

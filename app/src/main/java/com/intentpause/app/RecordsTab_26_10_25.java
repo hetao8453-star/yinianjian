@@ -38,7 +38,6 @@ public class RecordsTab_26_10_25 extends ScrollView implements Refreshable_26_10
     private final WeekBarsView_26_10_25 weekBars;
     private final RingChart_26_10_25 ringChart;
     private final LinearLayout ringLegend;
-    private final LinearLayout recentList;
     private final Handler noteHandler = new Handler(Looper.getMainLooper());
     private boolean suppressNote;
     private String noteKey;
@@ -200,10 +199,10 @@ public class RecordsTab_26_10_25 extends ScrollView implements Refreshable_26_10
         ringCard.addView(ringLegend);
         Ui_26_10_25.add(page, ringCard, 12);
 
-        // 最近会话
-        page.addView(Ui_26_10_25.section(activity, "最近会话"));
-        recentList = Ui_26_10_25.vertical(activity);
-        Ui_26_10_25.add(page, recentList, 6);
+        TextView more = Ui_26_10_25.action(activity, "完整记录在「我的 → 全部记录」",
+                () -> Ui_26_10_25.toast(activity, "打开底部「我的」，点「全部记录」查看每一次会话"));
+        more.setGravity(Gravity.CENTER);
+        Ui_26_10_25.add(page, more, 22);
 
         refresh();
     }
@@ -316,7 +315,6 @@ public class RecordsTab_26_10_25 extends ScrollView implements Refreshable_26_10
 
         renderWeek(db);
         renderRing(db);
-        renderRecent(db);
     }
 
     private void renderDayApps(List<IntentDb_26_10_25.DayApp> apps) {
@@ -432,63 +430,4 @@ public class RecordsTab_26_10_25 extends ScrollView implements Refreshable_26_10
         return copy;
     }
 
-    private void renderRecent(IntentDb_26_10_25 db) {
-        recentList.removeAllViews();
-        List<IntentDb_26_10_25.Session> sessions = db.recentSessions(10);
-        if (sessions.isEmpty()) {
-            LinearLayout empty = Ui_26_10_25.card(activity);
-            empty.addView(Ui_26_10_25.text(activity, "还没有记录", 15, Ui_26_10_25.INK, true));
-            empty.addView(Ui_26_10_25.hint(activity,
-                    "打开一个已控制的应用、做出选择后，这里会出现会话记录。"));
-            Ui_26_10_25.add(recentList, empty, 8);
-            return;
-        }
-        for (IntentDb_26_10_25.Session session : sessions) {
-            Ui_26_10_25.add(recentList, sessionRow(session), 8);
-        }
-    }
-
-    private View sessionRow(IntentDb_26_10_25.Session session) {
-        LinearLayout row = Ui_26_10_25.horizontal(activity);
-        row.setBackground(Ui_26_10_25.roundStroke(activity, Color.WHITE, Ui_26_10_25.LINE, 16));
-        row.setPadding(Ui_26_10_25.dp(activity, 14), Ui_26_10_25.dp(activity, 12),
-                Ui_26_10_25.dp(activity, 14), Ui_26_10_25.dp(activity, 12));
-        ImageView icon = new ImageView(activity);
-        android.graphics.drawable.Drawable drawable = Apps_26_10_25.icon(activity, session.pkg);
-        if (drawable != null) icon.setImageDrawable(drawable);
-        else icon.setImageResource(R.drawable.ic_launcher_foreground);
-        row.addView(icon, new LinearLayout.LayoutParams(
-                Ui_26_10_25.dp(activity, 32), Ui_26_10_25.dp(activity, 32)));
-
-        LinearLayout middle = Ui_26_10_25.vertical(activity);
-        middle.setPadding(Ui_26_10_25.dp(activity, 12), 0, 0, 0);
-        String name = session.label != null ? session.label : Apps_26_10_25.label(activity, session.pkg);
-        middle.addView(Ui_26_10_25.text(activity, name, 15, Ui_26_10_25.INK, true));
-        middle.addView(Ui_26_10_25.text(activity, describe(session), 12, Ui_26_10_25.MUTED, false));
-        row.addView(middle, new LinearLayout.LayoutParams(0,
-                LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-
-        TextView time = Ui_26_10_25.text(activity,
-                StatsMath_26_10_25.monthDay(session.startedWall) + " "
-                        + StatsMath_26_10_25.clock(session.startedWall),
-                11, Ui_26_10_25.MUTED, false);
-        row.addView(time);
-        return row;
-    }
-
-    private String describe(IntentDb_26_10_25.Session session) {
-        String status = session.status == null ? "" : session.status;
-        if ("declined".equals(status)) return "在确认页选择先不打开";
-        if ("left".equals(status)) {
-            return "复查页离开 · 估算少用 " + StatsMath_26_10_25.duration(session.savedEstMs);
-        }
-        if ("abandoned".equals(status)) return "确认页未选择，已结束";
-        if ("interrupted".equals(status)) return "服务中断，会话未完成";
-        if ("pending".equals(status)) return "尚未选择";
-        String purposeText = session.purpose == null ? "未记录目的" : session.purpose;
-        if (session.detail != null && !session.detail.isEmpty()) purposeText += "：" + session.detail;
-        if (session.reviewCount > 0) purposeText += " · 提醒 " + session.reviewCount + " 次";
-        if (session.emergency) purposeText = "应急使用（3 分钟） · " + purposeText;
-        return purposeText + " · 计划 " + StatsMath_26_10_25.minutes(session.plannedMin);
-    }
 }
