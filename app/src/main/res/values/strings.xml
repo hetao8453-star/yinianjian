@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">意图提醒</string>
-    <string name="accessibility_description">仅识别你选择的应用何时进入前台，在本机显示目的确认与到时复查。不读取屏幕文字，不上传使用记录。</string>
+    <string name="app_name">慢一拍</string>
+    <string name="accessibility_description">只识别你选择的应用何时进入前台，在本机显示一次目的确认与到时复查。不读取屏幕文字，不上传记录。</string>
 </resources>
