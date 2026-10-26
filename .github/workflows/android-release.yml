@@ -10,11 +10,11 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
@@ -57,7 +57,7 @@ jobs:
           sha256sum "yinianjian_${GITHUB_REF_NAME}.apk" > "yinianjian_${GITHUB_REF_NAME}.sha256"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: 一念间 ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
