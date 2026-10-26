@@ -164,7 +164,7 @@ public final class PromptOverlay_26_10_25 {
         custom.setTextSize(14);
         custom.setTextColor(Ui_26_10_25.INK);
         custom.setHintTextColor(Ui_26_10_25.MUTED);
-        custom.setHint("自定义分钟数（1–180）");
+        custom.setHint("自定义（1–180）");
         custom.setSingleLine(true);
         custom.setInputType(InputType.TYPE_CLASS_NUMBER);
         custom.setImeOptions(EditorInfo.IME_ACTION_DONE);
@@ -266,7 +266,7 @@ public final class PromptOverlay_26_10_25 {
         reviewInput.setTextSize(14);
         reviewInput.setTextColor(Ui_26_10_25.INK);
         reviewInput.setHintTextColor(Ui_26_10_25.MUTED);
-        reviewInput.setHint("自定义分钟数（1–180）");
+        reviewInput.setHint("自定义（1–180）");
         reviewInput.setSingleLine(true);
         reviewInput.setInputType(InputType.TYPE_CLASS_NUMBER);
         reviewInput.setImeOptions(EditorInfo.IME_ACTION_DONE);

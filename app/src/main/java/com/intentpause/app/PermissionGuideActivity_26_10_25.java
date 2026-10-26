@@ -85,19 +85,22 @@ public class PermissionGuideActivity_26_10_25 extends AppCompatActivity {
         battery.addView(sectionTitle("电池优化（建议）"));
         batteryState = Ui_26_10_25.hint(this, "");
         battery.addView(batteryState);
-        battery.addView(body("iQOO / OriginOS 的后台清理可能把无障碍服务停掉，导致提醒突然不工作。"
+        battery.addView(body("部分 Android 系统的省电策略会清理后台，导致提醒突然不工作。"
                 + "允许忽略电池优化能减少这种情况，但系统仍可能按自己的策略清理。"));
-        battery.addView(buttonRow("去设置后台限制", () ->
-                Perms_26_10_25.requestIgnoreBatteryOptimizations(this)));
+        battery.addView(buttonRow("去设置后台限制", () -> {
+            if (!Perms_26_10_25.requestIgnoreBatteryOptimizations(this)) {
+                Ui_26_10_25.toast(this, "没能打开电池设置，请到系统设置里手动找一念间");
+            }
+        }));
         Ui_26_10_25.add(list, battery, 10);
 
         LinearLayout autostart = Ui_26_10_25.card(this);
         autostart.addView(sectionTitle("自启动 / 后台高耗电（系统设置，不是权限）"));
-        autostart.addView(body("Android 没有可以直接申请的“后台运行”权限。iQOO 上建议手动完成三件事：\n"
-                + "1. 设置 → 应用与权限 → 应用管理 → 一念间 → 权限 → 自启动：允许；\n"
-                + "2. 电池 → 后台耗电管理 → 一念间：允许后台高耗电；\n"
-                + "3. 最近任务里下拉一念间的卡片：锁定，避免被一键清理。\n"
-                + "菜单名称可能因系统版本不同略有差异。开机后无障碍是否自动恢复，取决于系统是否保留授权。"));
+        autostart.addView(body("Android 没有可以直接申请的“后台运行”权限。部分手机建议手动完成三件事：\n"
+                + "1. 系统设置 → 应用管理 → 一念间 → 允许自启动/后台活动；\n"
+                + "2. 电池设置 → 一念间 → 允许后台高耗电；\n"
+                + "3. 最近任务里锁定一念间的卡片，避免被一键清理。\n"
+                + "不同品牌的菜单名称和位置不同。开机后无障碍是否自动恢复，取决于系统是否保留授权。"));
         autostart.addView(buttonRow("打开自启动设置", () ->
                 Perms_26_10_25.openAutostartSettings(this)));
         Ui_26_10_25.add(list, autostart, 10);
@@ -125,11 +128,10 @@ public class PermissionGuideActivity_26_10_25 extends AppCompatActivity {
         Ui_26_10_25.add(list, why, 10);
 
         LinearLayout notUsed = Ui_26_10_25.card(this);
-        notUsed.addView(sectionTitle("一念间不申请的权限"));
-        notUsed.addView(body("不使用情况访问权限（PACKAGE_USAGE_STATS）；\n"
-                + "不需要“显示在其他应用上层”的普通悬浮窗权限；\n"
-                + "没有联网权限，不上传记录；\n"
-                + "不读取屏幕内容，不读取通知，不读取剪贴板。"));
+        notUsed.addView(sectionTitle("只申请这些权限"));
+        notUsed.addView(body("必需：无障碍服务。只用来识别前台应用包名与窗口切换。\n"
+                + "可选：通知（兜底与开机提示）、前台服务、开机检查、电池优化白名单。\n\n"
+                + "不申请：联网、使用情况访问、悬浮窗、存储、读取屏幕内容、读取通知或剪贴板。"));
         Ui_26_10_25.add(list, notUsed, 10);
     }
 

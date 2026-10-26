@@ -32,7 +32,12 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
     private final TextView batteryAction;
     private final TextView lastLine;
     private final LinearLayout logList;
+    private final LinearLayout statusRows;
+    private final TextView statusSummary;
+    private final TextView statusToggle;
     private boolean logsExpanded;
+    private boolean statusExpanded;
+    private boolean autostartPending;
 
     public MineTab_26_10_25(MainActivity activity) {
         super(activity);
@@ -51,26 +56,48 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
 
         LinearLayout statusCard = Ui_26_10_25.card(activity);
         statusCard.addView(Ui_26_10_25.text(activity, "运行状态", 15, Ui_26_10_25.INK, true));
+        LinearLayout summaryRow = new LinearLayout(activity);
+        summaryRow.setOrientation(LinearLayout.HORIZONTAL);
+        summaryRow.setGravity(Gravity.CENTER_VERTICAL);
+        statusSummary = Ui_26_10_25.text(activity, "", 12, Ui_26_10_25.MUTED, false);
+        summaryRow.addView(statusSummary, new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        statusToggle = Ui_26_10_25.action(activity, "展开", () -> {
+        });
+        summaryRow.addView(statusToggle);
+        summaryRow.setOnClickListener(v -> statusToggle.performClick());
+        statusCard.addView(summaryRow);
+        statusRows = Ui_26_10_25.vertical(activity);
+        statusRows.setVisibility(View.GONE);
+        statusCard.addView(statusRows);
+        statusToggle.setOnClickListener(v -> {
+            statusExpanded = !statusExpanded;
+            statusRows.setVisibility(statusExpanded ? View.VISIBLE : View.GONE);
+            statusToggle.setText(statusExpanded ? "收起" : "展开");
+        });
 
-        LinearLayout row1 = statusRow(statusCard);
+        LinearLayout row1 = statusRow(statusRows);
         accessibility = statusRefs(row1, "无障碍服务");
         accessibilityAction = rowAction(row1, "去开启", () ->
                 Perms_26_10_25.openAccessibilitySettings(activity));
 
-        LinearLayout row2 = statusRow(statusCard);
+        LinearLayout row2 = statusRow(statusRows);
         notification = statusRefs(row2, "通知");
         notificationAction = rowAction(row2, "去开启", this::askNotifications);
 
-        LinearLayout row3 = statusRow(statusCard);
+        LinearLayout row3 = statusRow(statusRows);
         battery = statusRefs(row3, "电池优化");
-        batteryAction = rowAction(row3, "去设置", () ->
-                Perms_26_10_25.requestIgnoreBatteryOptimizations(activity));
+        batteryAction = rowAction(row3, "去设置", () -> {
+            if (!Perms_26_10_25.requestIgnoreBatteryOptimizations(activity)) {
+                Ui_26_10_25.toast(activity, "没能打开电池设置，请到系统设置里手动找一念间");
+            }
+        });
 
-        LinearLayout row4 = statusRow(statusCard);
+        LinearLayout row4 = statusRow(statusRows);
         autostart = statusRefs(row4, "自启动 / 后台高耗电");
         rowAction(row4, "去设置", () -> Perms_26_10_25.openAutostartSettings(activity));
 
-        LinearLayout row5 = statusRow(statusCard);
+        LinearLayout row5 = statusRow(statusRows);
         protection = statusRefs(row5, "后台保护");
         rowAction(row5, "启动", () -> {
             KeepAliveService_26_10_26.ensure(activity);
@@ -79,7 +106,7 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
 
         lastLine = Ui_26_10_25.hint(activity, "");
         lastLine.setPadding(0, Ui_26_10_25.dp(activity, 12), 0, 0);
-        statusCard.addView(lastLine);
+        statusRows.addView(lastLine);
         Ui_26_10_25.add(page, statusCard, 20);
 
         Ui_26_10_25.add(page, linkRow("全部记录", "每个应用每一次的选择",
@@ -212,8 +239,9 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
                 batteryOn ? "已允许，减少被清理" : "未设置，可能更早被清理");
         batteryAction.setText(batteryOn ? "设置" : "去设置");
 
-        update(autostart, false,
-                "需在系统设置手动允许");
+        boolean autostartOn = Perms_26_10_25.autostartAcknowledged(activity);
+        update(autostart, autostartOn,
+                autostartOn ? "已允许（手动确认）" : "未确认；可在系统设置允许");
         update(protection, KeepAliveService_26_10_26.running,
                 KeepAliveService_26_10_26.running ? "前台服务运行中，降低被清理概率" : "未运行；打开 App 会尝试启动");
 
@@ -229,7 +257,29 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
                     ? "最近连接 " + when + "；之后断开过，可能需要重新开启。"
                     : "最近连接 " + when + "。");
         }
+        int issues = (accessibilityOn ? 0 : 1) + (batteryOn ? 0 : 1) + (autostartOn ? 0 : 1);
+        statusSummary.setText((accessibilityOn ? "提醒已开启" : "提醒未开启")
+                + (issues > 0 ? " · " + issues + " 项可优化" : ""));
+        if (autostartPending) {
+            autostartPending = false;
+            askAutostart();
+        }
         if (logsExpanded) renderLogs();
+    }
+
+    private void askAutostart() {
+        new AlertDialog.Builder(activity)
+                .setTitle("自启动已经允许了吗？")
+                .setMessage("系统不允许 App 读取厂商的自启动开关，只能由你确认。")
+                .setNegativeButton("还没", (dialog, which) -> {
+                    Perms_26_10_25.setAutostartAcknowledged(activity, false);
+                    refresh();
+                })
+                .setPositiveButton("已允许", (dialog, which) -> {
+                    Perms_26_10_25.setAutostartAcknowledged(activity, true);
+                    refresh();
+                })
+                .show();
     }
 
     private void update(StatusRefs refs, boolean ok, String state) {

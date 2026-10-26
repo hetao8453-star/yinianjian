@@ -48,7 +48,7 @@ public class IntroActivity_26_10_26 extends AppCompatActivity {
         TextView title = Ui_26_10_25.text(this, "一念间", 32, Ui_26_10_25.INK, true);
         title.setGravity(Gravity.CENTER);
         page.addView(title);
-        TextView slogan = Ui_26_10_25.text(this, "打开之前，想想这次。", 17,
+        TextView slogan = Ui_26_10_25.text(this, "陪你停一下，也陪你做下去。", 17,
                 Ui_26_10_25.MUTED, false);
         slogan.setGravity(Gravity.CENTER);
         slogan.setPadding(0, Ui_26_10_25.dp(this, 10), 0, Ui_26_10_25.dp(this, 24));
@@ -60,7 +60,7 @@ public class IntroActivity_26_10_26 extends AppCompatActivity {
         addPoint(card, "只在本机", "不联网，不读屏幕内容，记录只留给自己。");
         page.addView(card);
 
-        TextView mascotLine = Ui_26_10_25.text(this, "小缓会陪你先停这一下。", 13,
+        TextView mascotLine = Ui_26_10_25.text(this, "小缓在，慢慢来。", 13,
                 Ui_26_10_25.MUTED, false);
         mascotLine.setGravity(Gravity.CENTER);
         mascotLine.setPadding(0, Ui_26_10_25.dp(this, 22), 0, Ui_26_10_25.dp(this, 10));

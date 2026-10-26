@@ -69,22 +69,42 @@ public final class Perms_26_10_25 {
         }
     }
 
-    public static void requestIgnoreBatteryOptimizations(Context context) {
-        try {
-            Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                    Uri.parse("package:" + context.getPackageName()));
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent);
-        } catch (RuntimeException e) {
-            try {
-                context.startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+    /** 返回是否成功打开某个系统页面；不同厂商的电池设置入口差异很大。 */
+    public static boolean requestIgnoreBatteryOptimizations(Context context) {
+        Intent direct = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                Uri.parse("package:" + context.getPackageName()))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (startIfResolves(context, direct)) return true;
+        if (startIfResolves(context,
+                new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))) return true;
+        return startIfResolves(context,
+                new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.parse("package:" + context.getPackageName()))
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            } catch (RuntimeException ignored) {
-            }
+    }
+
+    private static boolean startIfResolves(Context context, Intent intent) {
+        try {
+            if (intent.resolveActivity(context.getPackageManager()) == null) return false;
+            context.startActivity(intent);
+            return true;
+        } catch (RuntimeException e) {
+            return false;
         }
     }
 
-    /** 尝试打开 iQOO / vivo 系的自启动管理，失败则回落到应用详情。 */
+    public static boolean autostartAcknowledged(Context context) {
+        return context.getSharedPreferences("autostart", Context.MODE_PRIVATE)
+                .getBoolean("ack", false);
+    }
+
+    public static void setAutostartAcknowledged(Context context, boolean ack) {
+        context.getSharedPreferences("autostart", Context.MODE_PRIVATE)
+                .edit().putBoolean("ack", ack).apply();
+    }
+
+    /** 尝试打开厂商的自启动管理页；找不到就回落到系统应用详情。 */
     public static void openAutostartSettings(Activity activity) {
         String[][] candidates = {
                 {"com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"},

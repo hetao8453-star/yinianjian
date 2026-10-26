@@ -51,7 +51,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         LinearLayout titleBox = Ui_26_10_25.vertical(activity);
         titleBox.setPadding(Ui_26_10_25.dp(activity, 10), 0, 0, 0);
         titleBox.addView(Ui_26_10_25.text(activity, "一念间", 28, Ui_26_10_25.INK, true));
-        titleBox.addView(Ui_26_10_25.text(activity, "打开之前，想想这次。", 14, Ui_26_10_25.MUTED, false));
+        titleBox.addView(Ui_26_10_25.text(activity, "陪你停一下，也陪你做下去。", 14, Ui_26_10_25.MUTED, false));
         titleRow.addView(titleBox);
         Ui_26_10_25.add(page, titleRow, 0);
 
