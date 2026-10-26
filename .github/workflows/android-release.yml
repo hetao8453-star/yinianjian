@@ -19,11 +19,15 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Check Android SDK
+      - name: Ensure Android SDK 36
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          test -d "${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "Android SDK: $SDK"
+          test -d "$SDK"
+          if [ ! -d "$SDK/platforms/android-36" ]; then
+            yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+            "$SDK/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
+          fi
 
       - name: Decode release keystore
         env:
