@@ -163,6 +163,14 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
             foregroundPackage = pkg;
             return;
         }
+        if (isHomePackage(pkg)) {
+            // 从确认页上滑回桌面：结束这次停留，不再把覆盖层盖回来。
+            if (activePackage != null) finishSession("home", 0, false);
+            if (encouragePkg != null) encourageLeft(now);
+            foregroundPackage = pkg;
+            if (overlay != null) overlay.hide();
+            return;
+        }
         if (encouragePkg != null && encouragePkg.equals(pkg)) {
             encourageForeground(now);
             return;
@@ -828,6 +836,20 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         if (pkg.startsWith("com.google.android.permissioncontroller")) return true;
         if (imePackages.contains(pkg)) return true;
         return pkg.contains("inputmethod") || pkg.contains("input_method");
+    }
+
+    private boolean isHomePackage(String pkg) {
+        try {
+            android.content.Intent home = new android.content.Intent(
+                    android.content.Intent.ACTION_MAIN)
+                    .addCategory(android.content.Intent.CATEGORY_HOME);
+            android.content.pm.ResolveInfo info = getPackageManager()
+                    .resolveActivity(home, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY);
+            return info != null && info.activityInfo != null
+                    && pkg.equals(info.activityInfo.packageName);
+        } catch (RuntimeException ignored) {
+            return false;
+        }
     }
 
     private boolean selected(String pkg) {

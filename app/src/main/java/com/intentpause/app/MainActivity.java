@@ -49,9 +49,11 @@ public class MainActivity extends AppCompatActivity {
         root.addView(column);
         setContentView(root);
         Ui_26_10_25.applyInsets(root);
-        showTab(0);
+        int startTab = getIntent().getIntExtra("start_tab", 0);
+        showTab(startTab);
         KeepAliveService_26_10_26.ensure(this);
-        if (savedInstanceState == null && !Perms_26_10_25.accessibilityEnabled(this)) {
+        if (savedInstanceState == null && startTab == 0
+                && !Perms_26_10_25.accessibilityEnabled(this)) {
             Ui_26_10_25.toast(this, "先开启无障碍服务，一念间才能在你打开应用时停一下");
             root.postDelayed(() -> {
                 if (!Perms_26_10_25.accessibilityEnabled(this)) {

@@ -327,9 +327,9 @@ public class RecordsTab_26_10_26 extends ScrollView implements Refreshable_26_10
             int limit = Math.min(5, apps.size());
             for (int i = 0; i < limit; i++) {
                 IntentDb_26_10_25.DayApp app = apps.get(i);
-                detailsList.addView(detailRow(app.pkg, app.label,
+                detailRow(app.pkg, app.label,
                         "打开 " + app.opens + " 次 · 提醒 " + app.reminders + " 次 · "
-                                + StatsMath_26_10_25.duration(app.foregroundMs)));
+                                + StatsMath_26_10_25.duration(app.foregroundMs));
             }
         }
         if (!encouraged.isEmpty()) {
@@ -340,9 +340,9 @@ public class RecordsTab_26_10_26 extends ScrollView implements Refreshable_26_10
             int limit = Math.min(5, encouraged.size());
             for (int i = 0; i < limit; i++) {
                 IntentDb_26_10_25.EncourageAppSummary app = encouraged.get(i);
-                detailsList.addView(detailRow(app.pkg, app.label,
+                detailRow(app.pkg, app.label,
                         "打开 " + app.opens + " 次 · 鼓励 " + app.prompts + " 次 · "
-                                + StatsMath_26_10_25.duration(app.foregroundMs)));
+                                + StatsMath_26_10_25.duration(app.foregroundMs));
             }
         }
     }
