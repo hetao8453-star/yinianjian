@@ -21,6 +21,8 @@ public class BootReceiver_26_10_25 extends BroadcastReceiver {
             SessionState_26_10_25.clear(context);
         }
 
+        DailySummary_26_10_26.schedule(context);
+
         if (!Perms_26_10_25.accessibilityEnabled(context)) {
             Notify_26_10_25.bootCheck(context);
         }

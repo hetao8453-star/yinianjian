@@ -20,6 +20,8 @@ public final class Apps_26_10_25 {
     private static final String PREFS = "selected_apps";
     private static final String DEFAULTS = "app_defaults";
     private static final String SENSITIVE = "sensitive_apps";
+    private static final String ENCOURAGE = "encourage_apps";
+    private static final String ENCOURAGE_SETTINGS = "encourage_settings";
     public static final int DEFAULT_MINUTES = 10;
     private static List<ResolveInfo> cache;
 
@@ -97,6 +99,135 @@ public final class Apps_26_10_25 {
             if (e.getValue() instanceof Boolean && (Boolean) e.getValue()) result.add(e.getKey());
         }
         return result;
+    }
+
+    public static boolean encouraged(Context context, String pkg) {
+        return context.getSharedPreferences(ENCOURAGE, Context.MODE_PRIVATE)
+                .getBoolean(pkg, false);
+    }
+
+    public static void setEncouraged(Context context, String pkg, boolean on) {
+        context.getSharedPreferences(ENCOURAGE, Context.MODE_PRIVATE)
+                .edit().putBoolean(pkg, on).apply();
+    }
+
+    public static List<String> encouragePackages(Context context) {
+        android.content.SharedPreferences p = context.getSharedPreferences(ENCOURAGE, Context.MODE_PRIVATE);
+        Set<String> on = new HashSet<>();
+        for (java.util.Map.Entry<String, ?> e : p.getAll().entrySet()) {
+            if (e.getValue() instanceof Boolean && (Boolean) e.getValue()) on.add(e.getKey());
+        }
+        List<String> result = new ArrayList<>();
+        for (ResolveInfo info : launcherApps(context)) {
+            String pkg = info.activityInfo.packageName;
+            if (on.contains(pkg)) result.add(pkg);
+        }
+        return result;
+    }
+
+    public static int encourageInterval(Context context, String pkg) {
+        return context.getSharedPreferences(ENCOURAGE_SETTINGS, Context.MODE_PRIVATE)
+                .getInt(pkg + "_interval", 30);
+    }
+
+    public static void setEncourageInterval(Context context, String pkg, int minutes) {
+        context.getSharedPreferences(ENCOURAGE_SETTINGS, Context.MODE_PRIVATE)
+                .edit().putInt(pkg + "_interval", Math.max(10, Math.min(120, minutes))).apply();
+    }
+
+    public static boolean encourageOnOpen(Context context, String pkg) {
+        return context.getSharedPreferences(ENCOURAGE_SETTINGS, Context.MODE_PRIVATE)
+                .getBoolean(pkg + "_on_open", true);
+    }
+
+    public static void setEncourageOnOpen(Context context, String pkg, boolean on) {
+        context.getSharedPreferences(ENCOURAGE_SETTINGS, Context.MODE_PRIVATE)
+                .edit().putBoolean(pkg + "_on_open", on).apply();
+    }
+
+    public static boolean encourageDuring(Context context, String pkg) {
+        return context.getSharedPreferences(ENCOURAGE_SETTINGS, Context.MODE_PRIVATE)
+                .getBoolean(pkg + "_during", true);
+    }
+
+    public static void setEncourageDuring(Context context, String pkg, boolean on) {
+        context.getSharedPreferences(ENCOURAGE_SETTINGS, Context.MODE_PRIVATE)
+                .edit().putBoolean(pkg + "_during", on).apply();
+    }
+
+    public static boolean presetEnabled(Context context, String pkg) {
+        return context.getSharedPreferences(ENCOURAGE_SETTINGS, Context.MODE_PRIVATE)
+                .getBoolean(pkg + "_preset", true);
+    }
+
+    public static void setPresetEnabled(Context context, String pkg, boolean on) {
+        context.getSharedPreferences(ENCOURAGE_SETTINGS, Context.MODE_PRIVATE)
+                .edit().putBoolean(pkg + "_preset", on).apply();
+    }
+
+    public static String rotation(Context context, String pkg) {
+        return context.getSharedPreferences(ENCOURAGE_SETTINGS, Context.MODE_PRIVATE)
+                .getString(pkg + "_rotation", "random");
+    }
+
+    public static void setRotation(Context context, String pkg, String rotation) {
+        context.getSharedPreferences(ENCOURAGE_SETTINGS, Context.MODE_PRIVATE)
+                .edit().putString(pkg + "_rotation", rotation).apply();
+    }
+
+    public static List<String> customEncourageMessages(Context context, String pkg) {
+        String raw = context.getSharedPreferences(ENCOURAGE_SETTINGS, Context.MODE_PRIVATE)
+                .getString(pkg + "_custom", "");
+        List<String> result = new ArrayList<>();
+        if (raw == null || raw.isEmpty()) return result;
+        try {
+            org.json.JSONArray array = new org.json.JSONArray(raw);
+            for (int i = 0; i < array.length(); i++) {
+                String line = array.optString(i, "").trim();
+                if (!line.isEmpty()) result.add(line);
+            }
+        } catch (Exception ignored) {
+        }
+        return result;
+    }
+
+    public static void setCustomEncourageMessages(Context context, String pkg, List<String> messages) {
+        org.json.JSONArray array = new org.json.JSONArray();
+        for (String line : messages) {
+            if (line != null && !line.trim().isEmpty()) array.put(line.trim());
+        }
+        context.getSharedPreferences(ENCOURAGE_SETTINGS, Context.MODE_PRIVATE)
+                .edit().putString(pkg + "_custom", array.toString()).apply();
+    }
+
+    public static List<String> presetMessages() {
+        List<String> list = new ArrayList<>();
+        list.add("慢慢来，今天也在自己的节奏里。");
+        list.add("做一点，就算一点。");
+        list.add("此刻你在做想做的事，很好。");
+        list.add("不用急，先把手边这一段做好。");
+        list.add("能回来就好，继续一点点。");
+        list.add("这一小段时间，是你的。");
+        list.add("累了就歇一会儿，再继续。");
+        list.add("你已经开始了，这就够了。");
+        list.add("把注意力放在眼前这一件事上。");
+        list.add("今天也值得被好好用。");
+        return list;
+    }
+
+    public static String nextEncourageMessage(Context context, String pkg) {
+        List<String> messages = new ArrayList<>();
+        if (presetEnabled(context, pkg)) messages.addAll(presetMessages());
+        messages.addAll(customEncourageMessages(context, pkg));
+        if (messages.isEmpty()) messages.addAll(presetMessages());
+        if ("sequential".equals(rotation(context, pkg))) {
+            SharedPreferences p = context.getSharedPreferences(ENCOURAGE_SETTINGS, Context.MODE_PRIVATE);
+            int index = p.getInt(pkg + "_seq", 0);
+            String message = messages.get(Math.floorMod(index, messages.size()));
+            p.edit().putInt(pkg + "_seq", index + 1).apply();
+            return message;
+        }
+        return messages.get(new java.util.Random().nextInt(messages.size()));
     }
 
     public static int defaultMinutes(Context context, String pkg) {

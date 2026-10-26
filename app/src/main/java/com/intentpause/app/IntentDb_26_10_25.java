@@ -16,7 +16,7 @@ import java.util.Set;
 /** 本地会话与事件记录。只存本应用观察到的事实，不联网、不上传。 */
 public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
     private static final String DB_NAME = "intent.db";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2;
     private static volatile IntentDb_26_10_25 instance;
 
     public static IntentDb_26_10_25 get(Context context) {
@@ -65,6 +65,7 @@ public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE notes(date TEXT PRIMARY KEY, text TEXT, updated_wall INTEGER)");
         db.execSQL("CREATE TABLE service_log("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT, wall INTEGER, event TEXT, detail TEXT)");
+        createEncourageTable(db);
         db.execSQL("CREATE INDEX idx_sessions_started ON sessions(started_wall)");
         db.execSQL("CREATE INDEX idx_sessions_pkg ON sessions(pkg)");
         db.execSQL("CREATE INDEX idx_events_session ON events(session_id)");
@@ -73,7 +74,17 @@ public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // 首个版本；后续升级在这里做迁移，不清空用户记录。
+        if (oldVersion < 2) createEncourageTable(db);
+    }
+
+    private void createEncourageTable(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS encourage_sessions("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + "pkg TEXT NOT NULL, label TEXT,"
+                + "started_wall INTEGER NOT NULL, ended_wall INTEGER DEFAULT 0,"
+                + "foreground_ms INTEGER DEFAULT 0,"
+                + "status TEXT DEFAULT 'active')");
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_encourage_started ON encourage_sessions(started_wall)");
     }
 
     // ---------------- 写入 ----------------
@@ -403,6 +414,151 @@ public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
         return out;
     }
 
+    // ---------------- 鼓励应用 ----------------
+
+    public long startEncourageSession(String pkg, String label, long wall) {
+        ContentValues v = new ContentValues();
+        v.put("pkg", pkg);
+        v.put("label", label);
+        v.put("started_wall", wall);
+        return getWritableDatabase().insert("encourage_sessions", null, v);
+    }
+
+    public void addEncourageForeground(long id, long ms) {
+        if (id < 0 || ms <= 0) return;
+        getWritableDatabase().execSQL(
+                "UPDATE encourage_sessions SET foreground_ms=foreground_ms+? WHERE id=?",
+                new Object[]{ms, id});
+    }
+
+    public void endEncourageSession(long id, String status, long wall) {
+        ContentValues v = new ContentValues();
+        v.put("status", status);
+        v.put("ended_wall", wall);
+        getWritableDatabase().update("encourage_sessions", v, "id=?",
+                new String[]{String.valueOf(id)});
+    }
+
+    public EncourageStats encourageStats(long begin, long end) {
+        EncourageStats stats = new EncourageStats();
+        stats.opens = count("SELECT COUNT(*) FROM encourage_sessions WHERE started_wall>=? AND started_wall<?", begin, end);
+        stats.ms = sum("SELECT IFNULL(SUM(foreground_ms),0) FROM encourage_sessions WHERE started_wall>=? AND started_wall<?", begin, end);
+        stats.prompts = count("SELECT COUNT(*) FROM events WHERE type='encourage_shown' AND wall>=? AND wall<?", begin, end);
+        return stats;
+    }
+
+    public List<DayCount> encourageOpensPerDay(long begin, long end) {
+        Map<String, Integer> map = new HashMap<>();
+        try (Cursor c = getReadableDatabase().rawQuery(
+                "SELECT started_wall FROM encourage_sessions WHERE started_wall>=? AND started_wall<?",
+                toStrings(begin, end))) {
+            while (c.moveToNext()) {
+                String key = StatsMath_26_10_25.dateKey(c.getLong(0));
+                map.put(key, map.getOrDefault(key, 0) + 1);
+            }
+        }
+        List<DayCount> result = new ArrayList<>();
+        for (Map.Entry<String, Integer> e : map.entrySet()) {
+            DayCount d = new DayCount();
+            d.dateKey = e.getKey();
+            d.count = e.getValue();
+            result.add(d);
+        }
+        return result;
+    }
+
+    /** 完成选择的受控会话：实际进入过，或在确认页选了先不打开。 */
+    public int controlledActiveStops(long begin, long end) {
+        return count("SELECT COUNT(*) FROM sessions WHERE started_wall>=? AND started_wall<? "
+                + "AND (allowed_wall>0 OR status='declined')", begin, end);
+    }
+
+    public int declinedCount(long begin, long end) {
+        return count("SELECT COUNT(*) FROM sessions WHERE status='declined' AND started_wall>=? AND started_wall<?", begin, end);
+    }
+
+    public int allowedCountForPackage(String pkg, long begin, long end) {
+        return count("SELECT COUNT(*) FROM sessions WHERE pkg=? AND allowed_wall>0 AND started_wall>=? AND started_wall<?",
+                pkg, begin, end);
+    }
+
+    public List<DayCount> controlledStopsPerDay(long begin, long end) {
+        Map<String, Integer> map = new HashMap<>();
+        try (Cursor c = getReadableDatabase().rawQuery(
+                "SELECT started_wall FROM sessions WHERE started_wall>=? AND started_wall<? "
+                        + "AND (allowed_wall>0 OR status='declined')",
+                toStrings(begin, end))) {
+            while (c.moveToNext()) {
+                String key = StatsMath_26_10_25.dateKey(c.getLong(0));
+                map.put(key, map.getOrDefault(key, 0) + 1);
+            }
+        }
+        List<DayCount> result = new ArrayList<>();
+        for (Map.Entry<String, Integer> e : map.entrySet()) {
+            DayCount d = new DayCount();
+            d.dateKey = e.getKey();
+            d.count = e.getValue();
+            result.add(d);
+        }
+        return result;
+    }
+
+    public int[] controlledStopsPerHour(long begin, long end) {
+        int[] counts = new int[24];
+        try (Cursor c = getReadableDatabase().rawQuery(
+                "SELECT started_wall FROM sessions WHERE started_wall>=? AND started_wall<? "
+                        + "AND (allowed_wall>0 OR status='declined')", toStrings(begin, end))) {
+            while (c.moveToNext()) {
+                java.util.Calendar cal = java.util.Calendar.getInstance();
+                cal.setTimeInMillis(c.getLong(0));
+                int hour = cal.get(java.util.Calendar.HOUR_OF_DAY);
+                if (hour >= 0 && hour < 24) counts[hour]++;
+            }
+        }
+        return counts;
+    }
+
+    public int careDayCount(long begin, long end) {
+        Set<String> days = new HashSet<>();
+        try (Cursor c = getReadableDatabase().rawQuery(
+                "SELECT started_wall FROM sessions WHERE started_wall>=? AND started_wall<? "
+                        + "AND (allowed_wall>0 OR status='declined')", toStrings(begin, end))) {
+            while (c.moveToNext()) days.add(StatsMath_26_10_25.dateKey(c.getLong(0)));
+        }
+        try (Cursor c = getReadableDatabase().rawQuery(
+                "SELECT started_wall FROM encourage_sessions WHERE started_wall>=? AND started_wall<?",
+                toStrings(begin, end))) {
+            while (c.moveToNext()) days.add(StatsMath_26_10_25.dateKey(c.getLong(0)));
+        }
+        return days.size();
+    }
+
+    public List<EncourageAppSummary> encourageAppSummaries(long begin, long end) {
+        Map<String, EncourageAppSummary> map = new HashMap<>();
+        try (Cursor c = getReadableDatabase().rawQuery(
+                "SELECT pkg, IFNULL(label,''), COUNT(*), IFNULL(SUM(foreground_ms),0) "
+                        + "FROM encourage_sessions WHERE started_wall>=? AND started_wall<? "
+                        + "GROUP BY pkg ORDER BY COUNT(*) DESC", toStrings(begin, end))) {
+            while (c.moveToNext()) {
+                EncourageAppSummary a = new EncourageAppSummary();
+                a.pkg = c.getString(0);
+                a.label = c.getString(1);
+                a.opens = c.getInt(2);
+                a.foregroundMs = c.getLong(3);
+                map.put(a.pkg, a);
+            }
+        }
+        try (Cursor c = getReadableDatabase().rawQuery(
+                "SELECT pkg, COUNT(*) FROM events WHERE type='encourage_shown' "
+                        + "AND wall>=? AND wall<? GROUP BY pkg", toStrings(begin, end))) {
+            while (c.moveToNext()) {
+                EncourageAppSummary a = map.get(c.getString(0));
+                if (a != null) a.prompts = c.getInt(1);
+            }
+        }
+        return new ArrayList<>(map.values());
+    }
+
     // ---------------- POJO ----------------
 
     public static class Session {
@@ -465,5 +621,19 @@ public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
         public long wall;
         public String event;
         public String detail;
+    }
+
+    public static class EncourageStats {
+        public int opens;
+        public int prompts;
+        public long ms;
+    }
+
+    public static class EncourageAppSummary {
+        public String pkg;
+        public String label;
+        public int opens;
+        public int prompts;
+        public long foregroundMs;
     }
 }

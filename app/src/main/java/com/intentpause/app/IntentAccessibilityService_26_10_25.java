@@ -56,6 +56,16 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
     private String foregroundPackage;
     private boolean screenOn = true;
     private boolean receiverRegistered;
+    private EncourageBanner_26_10_26 encourageBanner;
+    private AlternativeOffer_26_10_26 alternativeOffer;
+    private String encouragePkg;
+    private long encourageId = -1;
+    private long encourageStartWall;
+    private long encourageLeftWall;
+    private long encourageFgEnterWall;
+    private long encourageMs;
+    private long encourageNextPromptWall;
+    private int todayOpenCount;
 
     private final BroadcastReceiver screenReceiver = new BroadcastReceiver() {
         @Override
@@ -66,13 +76,19 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
                 case Intent.ACTION_SCREEN_OFF:
                     screenOn = false;
                     pauseForeground(now);
+                    pauseEncourageForeground(now);
                     if (overlay != null) overlay.hide();
+                    if (encourageBanner != null) encourageBanner.hide();
                     persist();
                     break;
                 case Intent.ACTION_SCREEN_ON:
                 case Intent.ACTION_USER_PRESENT:
                     screenOn = true;
                     onScreenAvailable(now);
+                    if (encouragePkg != null && encouragePkg.equals(foregroundPackage)) {
+                        if (encourageFgEnterWall == 0) encourageFgEnterWall = now;
+                        scheduleEncouragePrompt();
+                    }
                     break;
                 default:
                     break;
@@ -124,6 +140,8 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         super.onServiceConnected();
         db = IntentDb_26_10_25.get(this);
         overlay = new PromptOverlay_26_10_25(this, this);
+        encourageBanner = new EncourageBanner_26_10_26(this);
+        alternativeOffer = new AlternativeOffer_26_10_26(this);
         refreshInputMethods();
         registerScreenReceiver();
         db.serviceEvent("connected", "无障碍服务已连接", System.currentTimeMillis());
@@ -140,6 +158,23 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         if (pkg.equals(getPackageName())) return;
         if (isIgnoredWindow(pkg)) return;
         long now = System.currentTimeMillis();
+
+        if (CarePause_26_10_26.paused(this)) {
+            foregroundPackage = pkg;
+            return;
+        }
+        if (encouragePkg != null && encouragePkg.equals(pkg)) {
+            encourageForeground(now);
+            return;
+        }
+        if (encouragePkg != null) {
+            encourageLeft(now);
+        }
+        if (Apps_26_10_25.encouraged(this, pkg) && !Apps_26_10_25.sensitive(this, pkg)) {
+            if (activePackage != null && !activePackage.equals(pkg)) onTargetLeft(now);
+            encourageEnter(pkg, now);
+            return;
+        }
 
         if (pkg.equals(foregroundPackage)) {
             sameForeground(pkg, now);
@@ -207,6 +242,9 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         persist();
         handler.removeCallbacksAndMessages(null);
         if (overlay != null) overlay.hide();
+        if (encourageBanner != null) encourageBanner.hide();
+        if (alternativeOffer != null) alternativeOffer.hide();
+        if (encouragePkg != null) endEncourage("service_destroyed", System.currentTimeMillis());
         if (receiverRegistered) {
             try {
                 unregisterReceiver(screenReceiver);
@@ -220,6 +258,10 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
     // ---------------- 事件与状态 ----------------
 
     private void sameForeground(String pkg, long now) {
+        if (encouragePkg != null && encouragePkg.equals(pkg)) {
+            encourageForeground(now);
+            return;
+        }
         if (activePackage != null && activePackage.equals(pkg)) {
             lastTargetSeenWall = now;
             handler.removeCallbacks(leaveHide);
@@ -252,6 +294,10 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
     }
 
     private void onScreenAvailable(long now) {
+        if (encouragePkg != null && encouragePkg.equals(foregroundPackage)) {
+            if (encourageFgEnterWall == 0) encourageFgEnterWall = now;
+            scheduleEncouragePrompt();
+        }
         if (activePackage == null) {
             if (foregroundPackage != null && monitored(foregroundPackage) && interactive()) {
                 startSession(foregroundPackage, now);
@@ -269,6 +315,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
     }
 
     private void startSession(String pkg, long now) {
+        if (encourageBanner != null) encourageBanner.hide();
         sessionId = db.startSession(pkg, Apps_26_10_25.label(this, pkg), now);
         activePackage = pkg;
         label = Apps_26_10_25.label(this, pkg);
@@ -289,9 +336,13 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         lastTargetSeenWall = now;
         handler.removeCallbacks(dueCheck);
         handler.removeCallbacks(graceCheck);
+        int priorOpens = db.allowedCountForPackage(pkg, StatsMath_26_10_25.startOfDay(now), now);
+        todayOpenCount = priorOpens + 1;
         db.event(sessionId, activePackage, "prompt_shown", null, null, null, now);
         persist();
-        if (interactive() && overlay != null) overlay.showPrompt(activePackage, label, detail);
+        if (interactive() && overlay != null) {
+            overlay.showPrompt(activePackage, label, detail, todayOpenCount);
+        }
     }
 
     private void allow(int minutes, boolean emergencyFlag, boolean first) {
@@ -318,6 +369,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
     }
 
     private void showReview() {
+        if (encourageBanner != null) encourageBanner.hide();
         if (activePackage == null || !activePackage.equals(foregroundPackage) || !interactive()) return;
         long now = System.currentTimeMillis();
         waitingForChoice = true;
@@ -352,7 +404,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         } else if (page == 3) {
             overlay.showUnsure(activePackage, label, durationMinutes);
         } else {
-            overlay.showPrompt(activePackage, label, detail);
+            overlay.showPrompt(activePackage, label, detail, todayOpenCount);
         }
     }
 
@@ -378,6 +430,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         reviewLogged = false;
         page = 1;
         sessionId = -1;
+        todayOpenCount = 0;
         startedWall = 0;
         allowedWall = 0;
         dueWall = 0;
@@ -385,6 +438,125 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         foregroundMs = 0;
         fgEnterWall = 0;
         SessionState_26_10_25.clear(this);
+    }
+
+    // ---------------- 鼓励应用 ----------------
+
+    private void encourageEnter(String pkg, long now) {
+        if (encouragePkg != null && encouragePkg.equals(pkg)) {
+            encourageForeground(now);
+            return;
+        }
+        if (encouragePkg != null) endEncourage("switched", now);
+        encouragePkg = pkg;
+        encourageStartWall = now;
+        encourageFgEnterWall = now;
+        encourageLeftWall = 0;
+        encourageMs = 0;
+        foregroundPackage = pkg;
+        encourageId = db.startEncourageSession(pkg, Apps_26_10_25.label(this, pkg), now);
+        int interval = Apps_26_10_25.encourageInterval(this, pkg);
+        encourageNextPromptWall = now + interval * MINUTE;
+        if (Apps_26_10_25.encourageOnOpen(this, pkg) && interactive()) {
+            showEncourageBanner(Apps_26_10_25.nextEncourageMessage(this, pkg), "open");
+        }
+        scheduleEncouragePrompt();
+    }
+
+    private void encourageForeground(long now) {
+        if (encouragePkg == null) return;
+        if (encourageLeftWall > 0) {
+            if (now - encourageLeftWall <= GRACE) {
+                encourageFgEnterWall = now;
+                encourageLeftWall = 0;
+            } else {
+                endEncourage("left_natural", now);
+                return;
+            }
+        }
+        if (encourageFgEnterWall == 0) encourageFgEnterWall = now;
+        if (encourageNextPromptWall > 0 && now >= encourageNextPromptWall
+                && Apps_26_10_25.encourageDuring(this, encouragePkg)) {
+            showEncourageBanner(Apps_26_10_25.nextEncourageMessage(this, encouragePkg), "during");
+            encourageNextPromptWall = now
+                    + Apps_26_10_25.encourageInterval(this, encouragePkg) * MINUTE;
+        }
+        scheduleEncouragePrompt();
+    }
+
+    private void encourageLeft(long now) {
+        if (encouragePkg == null || encourageLeftWall > 0) return;
+        pauseEncourageForeground(now);
+        encourageLeftWall = now;
+        if (encourageBanner != null) encourageBanner.hide();
+        handler.postDelayed(encourageGraceCheck, GRACE + 100);
+    }
+
+    private void pauseEncourageForeground(long now) {
+        if (encouragePkg != null && encourageFgEnterWall > 0) {
+            encourageMs += Math.max(0, now - encourageFgEnterWall);
+            if (encourageId > 0) db.addEncourageForeground(encourageId, Math.max(0, now - encourageFgEnterWall));
+            encourageFgEnterWall = 0;
+        }
+    }
+
+    private void endEncourage(String status, long now) {
+        if (encouragePkg == null) return;
+        pauseEncourageForeground(now);
+        if (encourageId > 0) db.endEncourageSession(encourageId, status, now);
+        if (encourageBanner != null) encourageBanner.hide();
+        handler.removeCallbacks(encourageDueCheck);
+        handler.removeCallbacks(encourageGraceCheck);
+        encouragePkg = null;
+        encourageId = -1;
+        encourageStartWall = 0;
+        encourageLeftWall = 0;
+        encourageFgEnterWall = 0;
+        encourageMs = 0;
+        encourageNextPromptWall = 0;
+    }
+
+    private void showEncourageBanner(String message, String kind) {
+        if (message == null || message.isEmpty()) return;
+        if (overlay != null && overlay.isShowing()) return;
+        if (encourageBanner != null) encourageBanner.show(message);
+        db.event(-1, encouragePkg, "encourage_shown", null, null, kind, System.currentTimeMillis());
+    }
+
+    private final Runnable encourageDueCheck = new Runnable() {
+        @Override
+        public void run() {
+            if (encouragePkg == null || !screenOn || !interactive()) return;
+            if (!encouragePkg.equals(foregroundPackage) || encourageLeftWall > 0) return;
+            if (overlay != null && overlay.isShowing()) return;
+            long now = System.currentTimeMillis();
+            if (encourageNextPromptWall <= 0 || now < encourageNextPromptWall) return;
+            if (Apps_26_10_25.encourageDuring(IntentAccessibilityService_26_10_25.this, encouragePkg)) {
+                showEncourageBanner(Apps_26_10_25.nextEncourageMessage(
+                        IntentAccessibilityService_26_10_25.this, encouragePkg), "during");
+                encourageNextPromptWall = now
+                        + Apps_26_10_25.encourageInterval(IntentAccessibilityService_26_10_25.this, encouragePkg) * MINUTE;
+            }
+            scheduleEncouragePrompt();
+        }
+    };
+
+    private final Runnable encourageGraceCheck = new Runnable() {
+        @Override
+        public void run() {
+            if (encouragePkg == null || encourageLeftWall <= 0) return;
+            long now = System.currentTimeMillis();
+            if (now - encourageLeftWall <= GRACE) return;
+            if (!encouragePkg.equals(foregroundPackage)) endEncourage("left_natural", now);
+        }
+    };
+
+    private void scheduleEncouragePrompt() {
+        handler.removeCallbacks(encourageDueCheck);
+        if (encouragePkg == null || !screenOn || !interactive()) return;
+        if (!Apps_26_10_25.encourageDuring(this, encouragePkg)) return;
+        long delay = Math.max(1000, encourageNextPromptWall - System.currentTimeMillis());
+        handler.postDelayed(encourageDueCheck, delay);
     }
 
     private void pauseForeground(long now) {
@@ -450,6 +622,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         db.event(sessionId, activePackage, "decline", purpose, detail, null, now);
         db.markDeclined(sessionId, now);
         finishSession("declined", 0, true);
+        showAlternative();
         performGlobalAction(GLOBAL_ACTION_HOME);
     }
 
@@ -473,7 +646,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         db.event(sessionId, activePackage, "back_to_purpose", null, detail, null, now);
         page = 1;
         persist();
-        overlay.showPrompt(activePackage, label, detail);
+        overlay.showPrompt(activePackage, label, detail, todayOpenCount);
     }
 
     @Override
@@ -508,7 +681,7 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         db.updatePurpose(sessionId, null, null);
         page = 1;
         persist();
-        overlay.showPrompt(activePackage, label, detail);
+        overlay.showPrompt(activePackage, label, detail, todayOpenCount);
     }
 
     @Override
@@ -517,7 +690,37 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         db.event(sessionId, activePackage, "review_leave", purpose, detail, null, now);
         long saved = StatsMath_26_10_25.savedEstimateMs(durationMinutes);
         finishSession("left", saved, false);
+        showAlternative();
         performGlobalAction(GLOBAL_ACTION_HOME);
+    }
+
+    private void showAlternative() {
+        if (alternativeOffer == null) return;
+        alternativeOffer.show(new AlternativeOffer_26_10_26.Listener() {
+            @Override
+            public void onOpenApp(String pkg) {
+                try {
+                    android.content.Intent intent = getPackageManager()
+                            .getLaunchIntentForPackage(pkg);
+                    if (intent != null) {
+                        intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    }
+                } catch (RuntimeException ignored) {
+                }
+            }
+
+            @Override
+            public void onSmallAction() {
+                Ui_26_10_25.toast(IntentAccessibilityService_26_10_25.this,
+                        "去喝口水吧，回来再继续。");
+            }
+
+            @Override
+            public void onHome() {
+                performGlobalAction(GLOBAL_ACTION_HOME);
+            }
+        });
     }
 
     @Override

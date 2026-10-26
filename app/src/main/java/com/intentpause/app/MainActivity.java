@@ -7,7 +7,10 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.app.TimePickerDialog;
+import android.widget.ScrollView;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
@@ -19,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout navBar;
     private final List<View> navItems = new ArrayList<>();
     private HomeTab_26_10_25 home;
-    private RecordsTab_26_10_25 records;
+    private RecordsTab_26_10_26 records;
     private MineTab_26_10_25 mine;
     private int currentTab = -1;
 
@@ -62,6 +65,49 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         refreshCurrent();
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
+                this::maybeShowDailySummary, 700);
+    }
+
+    private void maybeShowDailySummary() {
+        if (isFinishing()) return;
+        if (!DailySummary_26_10_26.askedTime(this)
+                && DailySummary_26_10_26.minutes(this) < 0) {
+            DailySummary_26_10_26.markAskedTime(this);
+            new AlertDialog.Builder(this)
+                    .setTitle("每天什么时候看今日总结？")
+                    .setMessage("选一个时间，一念间会把今天的 6 个数字和一句总结放在那里。通知关闭时，下次打开也能补看。")
+                    .setNegativeButton("以后再说", null)
+                    .setPositiveButton("选时间", (dialog, which) -> pickSummaryTime())
+                    .show();
+            return;
+        }
+        if (DailySummary_26_10_26.hasPending(this)) {
+            DailySummary_26_10_26.clearPending(this);
+            ScrollView scroll = new ScrollView(this);
+            TextView text = Ui_26_10_25.text(this,
+                    DailySummary_26_10_26.todayText(this), 14, Ui_26_10_25.INK, false);
+            text.setPadding(Ui_26_10_25.dp(this, 20), Ui_26_10_25.dp(this, 8),
+                    Ui_26_10_25.dp(this, 20), Ui_26_10_25.dp(this, 8));
+            text.setLineSpacing(Ui_26_10_25.dp(this, 3), 1f);
+            scroll.addView(text);
+            new AlertDialog.Builder(this)
+                    .setTitle("今日总结")
+                    .setView(scroll)
+                    .setPositiveButton("好", null)
+                    .show();
+        }
+    }
+
+    private void pickSummaryTime() {
+        int minutes = DailySummary_26_10_26.minutes(this);
+        int hour = minutes < 0 ? 21 : minutes / 60;
+        int minute = minutes < 0 ? 30 : minutes % 60;
+        new TimePickerDialog(this, (view, h, m) -> {
+            DailySummary_26_10_26.setMinutes(this, h * 60 + m);
+            DailySummary_26_10_26.markAskedTime(this);
+            if (mine != null) mine.refresh();
+        }, hour, minute, true).show();
     }
 
     @Override
@@ -114,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
             if (home == null) home = new HomeTab_26_10_25(this);
             tab = home;
         } else if (index == 1) {
-            if (records == null) records = new RecordsTab_26_10_25(this);
+            if (records == null) records = new RecordsTab_26_10_26(this);
             tab = records;
         } else {
             if (mine == null) mine = new MineTab_26_10_25(this);

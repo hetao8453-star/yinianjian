@@ -25,9 +25,12 @@ public final class Perms_26_10_25 {
             String list = android.provider.Settings.Secure.getString(
                     context.getContentResolver(),
                     android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-            String component = new android.content.ComponentName(context,
-                    IntentAccessibilityService_26_10_25.class).flattenToString();
-            if (enabled == 1 && list != null && list.contains(component)) return true;
+            String className = IntentAccessibilityService_26_10_25.class.getName();
+            String shortName = context.getPackageName() + "/." +
+                    IntentAccessibilityService_26_10_25.class.getSimpleName();
+            String fullName = context.getPackageName() + "/" + className;
+            if (enabled == 1 && list != null
+                    && (list.contains(fullName) || list.contains(shortName))) return true;
         } catch (RuntimeException ignored) {
         }
         AccessibilityManager manager =

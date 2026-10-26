@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.app.TimePickerDialog;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
@@ -35,6 +36,8 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
     private final LinearLayout statusRows;
     private final TextView statusSummary;
     private final TextView statusToggle;
+    private TextView careSubtitle;
+    private TextView summarySubtitle;
     private boolean logsExpanded;
     private boolean statusExpanded;
     private boolean autostartPending;
@@ -109,6 +112,23 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         statusRows.addView(lastLine);
         Ui_26_10_25.add(page, statusCard, 20);
 
+        LinearLayout care = linkRow("今天先暂停照看", "暂停今天的提示和鼓励，明天自动恢复", null);
+        careSubtitle = (TextView) ((LinearLayout) care.getChildAt(0)).getChildAt(1);
+        care.setOnClickListener(v -> {
+            if (CarePause_26_10_26.paused(activity)) {
+                CarePause_26_10_26.resume(activity);
+            } else {
+                CarePause_26_10_26.pauseToday(activity);
+            }
+            refresh();
+        });
+        Ui_26_10_25.add(page, care, 10);
+
+        LinearLayout dailyRow = linkRow("今日总结", "每天一次，轻轻回看今天", null);
+        summarySubtitle = (TextView) ((LinearLayout) dailyRow.getChildAt(0)).getChildAt(1);
+        dailyRow.setOnClickListener(v -> openDailySummary());
+        Ui_26_10_25.add(page, dailyRow, 10);
+
         Ui_26_10_25.add(page, linkRow("全部记录", "每个应用每一次的选择",
                 new Intent(activity, AppRecordActivity_26_10_25.class)), 16);
         Ui_26_10_25.add(page, linkRow("敏感应用", "打开时不弹确认页，也不记录",
@@ -143,7 +163,7 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         LinearLayout about = Ui_26_10_25.card(activity);
         about.addView(Ui_26_10_25.text(activity, "关于一念间", 15, Ui_26_10_25.INK, true));
         about.addView(Ui_26_10_25.hint(activity,
-                "v4 本地验证版 · 不联网 · 不读屏 · 记录只在本机。\n"
+                "v5 本地验证版 · 不联网 · 不读屏 · 记录只在本机。\n"
                         + "当前是自用验证包，不是公开发布版本。"));
         Ui_26_10_25.add(page, about, 20);
 
@@ -257,6 +277,15 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
                     ? "最近连接 " + when + "；之后断开过，可能需要重新开启。"
                     : "最近连接 " + when + "。");
         }
+        if (careSubtitle != null) {
+            careSubtitle.setText(CarePause_26_10_26.paused(activity)
+                    ? "今天已暂停，点按恢复" : "暂停今天的提示和鼓励，明天自动恢复");
+        }
+        if (summarySubtitle != null) {
+            int minutes = DailySummary_26_10_26.minutes(activity);
+            summarySubtitle.setText(minutes < 0 ? "还没设置时间 · 点按设置"
+                    : "每天 " + DailySummary_26_10_26.timeText(activity) + " · 点按查看");
+        }
         int issues = (accessibilityOn ? 0 : 1) + (batteryOn ? 0 : 1) + (autostartOn ? 0 : 1);
         statusSummary.setText((accessibilityOn ? "提醒已开启" : "提醒未开启")
                 + (issues > 0 ? " · " + issues + " 项可优化" : ""));
@@ -265,6 +294,39 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
             askAutostart();
         }
         if (logsExpanded) renderLogs();
+    }
+
+    private void openDailySummary() {
+        int minutes = DailySummary_26_10_26.minutes(activity);
+        if (minutes < 0) {
+            pickSummaryTime();
+            return;
+        }
+        ScrollView scroll = new ScrollView(activity);
+        TextView text = Ui_26_10_25.text(activity,
+                DailySummary_26_10_26.todayText(activity), 14, Ui_26_10_25.INK, false);
+        text.setPadding(Ui_26_10_25.dp(activity, 20), Ui_26_10_25.dp(activity, 8),
+                Ui_26_10_25.dp(activity, 20), Ui_26_10_25.dp(activity, 8));
+        text.setLineSpacing(Ui_26_10_25.dp(activity, 3), 1f);
+        scroll.addView(text);
+        new AlertDialog.Builder(activity)
+                .setTitle("今日总结")
+                .setView(scroll)
+                .setNegativeButton("关闭", null)
+                .setPositiveButton("改时间", (dialog, which) -> pickSummaryTime())
+                .show();
+    }
+
+    private void pickSummaryTime() {
+        int minutes = DailySummary_26_10_26.minutes(activity);
+        int hour = minutes < 0 ? 21 : minutes / 60;
+        int minute = minutes < 0 ? 30 : minutes % 60;
+        new TimePickerDialog(activity, (view, h, m) -> {
+            DailySummary_26_10_26.setMinutes(activity, h * 60 + m);
+            refresh();
+            Ui_26_10_25.toast(activity, "每天 " + String.format(java.util.Locale.CHINA,
+                    "%02d:%02d", h, m) + " 整理今天的记录");
+        }, hour, minute, true).show();
     }
 
     private void askAutostart() {

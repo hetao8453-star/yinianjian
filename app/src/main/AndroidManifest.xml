@@ -76,6 +76,10 @@
         </service>
 
         <receiver
+            android:name=".DailySummaryReceiver_26_10_26"
+            android:exported="false" />
+
+        <receiver
             android:name=".BootReceiver_26_10_25"
             android:exported="true"
             android:enabled="true">

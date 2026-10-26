@@ -7,7 +7,10 @@ import android.graphics.Typeface;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -23,12 +26,14 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
 
     private final MainActivity activity;
     private final LinearLayout appList;
+    private final LinearLayout encourageList;
     private final View statusDot;
     private final TextView statusTitle;
     private final TextView statusLine;
     private final TextView todayLine;
     private final Button statusButton;
     private boolean expanded;
+    private boolean encourageExpanded;
 
     public HomeTab_26_10_25(MainActivity activity) {
         super(activity);
@@ -100,6 +105,23 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
                 new Intent(activity, AppPickerActivity_26_10_25.class)));
         Ui_26_10_25.add(page, add, 14);
 
+        LinearLayout encourageHead = Ui_26_10_25.horizontal(activity);
+        TextView encourageSection = Ui_26_10_25.section(activity, "鼓励应用");
+        encourageHead.addView(encourageSection, new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        TextView manageEncourage = Ui_26_10_25.action(activity, "管理", () ->
+                activity.startActivity(new Intent(activity, AppPickerActivity_26_10_25.class)
+                        .putExtra("mode", "encourage")));
+        encourageHead.addView(manageEncourage);
+        Ui_26_10_25.add(page, encourageHead, 28);
+        encourageList = Ui_26_10_25.vertical(activity);
+        Ui_26_10_25.add(page, encourageList, 8);
+        Button addEncourage = Ui_26_10_25.button(activity, "添加鼓励应用", false);
+        addEncourage.setOnClickListener(v -> activity.startActivity(
+                new Intent(activity, AppPickerActivity_26_10_25.class)
+                        .putExtra("mode", "encourage")));
+        Ui_26_10_25.add(page, addEncourage, 14);
+
         LinearLayout tip = Ui_26_10_25.card(activity);
         tip.addView(Ui_26_10_25.text(activity, "怎么工作", 15, Ui_26_10_25.INK, true));
         tip.addView(Ui_26_10_25.hint(activity,
@@ -147,6 +169,165 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
                 + " 次 · 在应用内 " + StatsMath_26_10_25.duration(stats.foregroundMs));
 
         renderApps();
+        renderEncourageApps();
+    }
+
+    private void renderEncourageApps() {
+        encourageList.removeAllViews();
+        List<String> encouraged = Apps_26_10_25.encouragePackages(activity);
+        if (encouraged.isEmpty()) {
+            LinearLayout empty = Ui_26_10_25.card(activity);
+            empty.addView(Ui_26_10_25.text(activity, "还没有鼓励应用", 15,
+                    Ui_26_10_25.INK, true));
+            empty.addView(Ui_26_10_25.hint(activity,
+                    "把想多用的应用放进来：打开时给一句鼓励，用久了轻轻提醒一下。"));
+            Ui_26_10_25.add(encourageList, empty, 8);
+            return;
+        }
+        int limit = encourageExpanded ? encouraged.size()
+                : Math.min(COLLAPSED_COUNT, encouraged.size());
+        for (int i = 0; i < limit; i++) {
+            Ui_26_10_25.add(encourageList, encourageRow(encouraged.get(i)), 8);
+        }
+        if (encouraged.size() > COLLAPSED_COUNT) {
+            TextView more = Ui_26_10_25.action(activity,
+                    encourageExpanded ? "收起" : "展开全部（" + encouraged.size() + "）", () -> {
+                        encourageExpanded = !encourageExpanded;
+                        renderEncourageApps();
+                    });
+            more.setGravity(Gravity.CENTER);
+            more.setPadding(0, Ui_26_10_25.dp(activity, 10), 0, Ui_26_10_25.dp(activity, 4));
+            Ui_26_10_25.add(encourageList, more, 2);
+        }
+    }
+
+    private View encourageRow(String pkg) {
+        LinearLayout row = Ui_26_10_25.horizontal(activity);
+        row.setBackground(Ui_26_10_25.rippleStroke(activity, Color.WHITE, Ui_26_10_25.LINE, 16));
+        row.setPadding(Ui_26_10_25.dp(activity, 14), Ui_26_10_25.dp(activity, 10),
+                Ui_26_10_25.dp(activity, 10), Ui_26_10_25.dp(activity, 10));
+        ImageView icon = new ImageView(activity);
+        android.graphics.drawable.Drawable drawable = Apps_26_10_25.icon(activity, pkg);
+        if (drawable != null) icon.setImageDrawable(drawable);
+        else icon.setImageResource(R.drawable.ic_launcher_foreground);
+        row.addView(icon, new LinearLayout.LayoutParams(
+                Ui_26_10_25.dp(activity, 34), Ui_26_10_25.dp(activity, 34)));
+
+        LinearLayout textBox = Ui_26_10_25.vertical(activity);
+        textBox.setPadding(Ui_26_10_25.dp(activity, 12), 0, 0, 0);
+        textBox.addView(Ui_26_10_25.text(activity, Apps_26_10_25.label(activity, pkg),
+                16, Ui_26_10_25.INK, true));
+        String note = "每 " + Apps_26_10_25.encourageInterval(activity, pkg) + " 分钟轻鼓励";
+        if (!Apps_26_10_25.encourageOnOpen(activity, pkg)) note = "使用中轻鼓励";
+        if (!Apps_26_10_25.encourageDuring(activity, pkg)) note = "打开时轻鼓励";
+        textBox.addView(Ui_26_10_25.text(activity, note + " · 点按设置",
+                12, Ui_26_10_25.MUTED, false));
+        row.addView(textBox, new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+        Toggle_26_10_25 toggle = new Toggle_26_10_25(activity);
+        toggle.setChecked(true, false);
+        toggle.setContentDescription("鼓励" + Apps_26_10_25.label(activity, pkg));
+        toggle.setOnToggleRequested(next -> {
+            if (!next) {
+                Apps_26_10_25.setEncouraged(activity, pkg, false);
+                refresh();
+            }
+        });
+        row.addView(toggle, new LinearLayout.LayoutParams(
+                Ui_26_10_25.dp(activity, 48), Ui_26_10_25.dp(activity, 28)));
+        row.setOnClickListener(v -> showEncourageDialog(pkg));
+        return row;
+    }
+
+    private void showEncourageDialog(String pkg) {
+        ScrollView scroll = new ScrollView(activity);
+        LinearLayout box = Ui_26_10_25.vertical(activity);
+        box.setPadding(Ui_26_10_25.dp(activity, 20), Ui_26_10_25.dp(activity, 8),
+                Ui_26_10_25.dp(activity, 20), Ui_26_10_25.dp(activity, 8));
+        scroll.addView(box);
+
+        CheckBox onOpen = new CheckBox(activity);
+        onOpen.setText("打开时，给一句鼓励");
+        onOpen.setTextColor(Ui_26_10_25.INK);
+        onOpen.setChecked(Apps_26_10_25.encourageOnOpen(activity, pkg));
+        box.addView(onOpen);
+
+        CheckBox during = new CheckBox(activity);
+        during.setText("使用中，隔一段时间轻提醒");
+        during.setTextColor(Ui_26_10_25.INK);
+        during.setChecked(Apps_26_10_25.encourageDuring(activity, pkg));
+        box.addView(during);
+
+        EditText interval = new EditText(activity);
+        interval.setInputType(InputType.TYPE_CLASS_NUMBER);
+        interval.setHint("间隔分钟（10–120）");
+        interval.setText(String.valueOf(Apps_26_10_25.encourageInterval(activity, pkg)));
+        interval.setTextColor(Ui_26_10_25.INK);
+        interval.setHintTextColor(Ui_26_10_25.MUTED);
+        box.addView(interval);
+
+        CheckBox preset = new CheckBox(activity);
+        preset.setText("使用内置鼓励文案");
+        preset.setTextColor(Ui_26_10_25.INK);
+        preset.setChecked(Apps_26_10_25.presetEnabled(activity, pkg));
+        box.addView(preset);
+
+        TextView rotationLabel = Ui_26_10_25.text(activity, "文案顺序", 13,
+                Ui_26_10_25.MUTED, false);
+        rotationLabel.setPadding(0, Ui_26_10_25.dp(activity, 8), 0, 0);
+        box.addView(rotationLabel);
+        RadioGroup group = new RadioGroup(activity);
+        group.setOrientation(RadioGroup.HORIZONTAL);
+        int randomId = View.generateViewId();
+        int sequentialId = View.generateViewId();
+        RadioButton random = new RadioButton(activity);
+        random.setText("随机");
+        random.setTextColor(Ui_26_10_25.INK);
+        random.setId(randomId);
+        RadioButton sequential = new RadioButton(activity);
+        sequential.setText("按顺序");
+        sequential.setTextColor(Ui_26_10_25.INK);
+        sequential.setId(sequentialId);
+        group.addView(random);
+        group.addView(sequential);
+        group.check("sequential".equals(Apps_26_10_25.rotation(activity, pkg)) ? sequentialId : randomId);
+        box.addView(group);
+
+        EditText custom = new EditText(activity);
+        custom.setHint("自己写几句，每行一句（可留空）");
+        custom.setHintTextColor(Ui_26_10_25.MUTED);
+        custom.setTextColor(Ui_26_10_25.INK);
+        custom.setTextSize(14);
+        custom.setMinLines(3);
+        custom.setGravity(Gravity.TOP);
+        custom.setText(String.join("\n", Apps_26_10_25.customEncourageMessages(activity, pkg)));
+        box.addView(custom);
+
+        new AlertDialog.Builder(activity)
+                .setTitle(Apps_26_10_25.label(activity, pkg) + " · 鼓励方式")
+                .setView(scroll)
+                .setNegativeButton("取消", null)
+                .setPositiveButton("保存", (dialog, which) -> {
+                    int minutes = 30;
+                    try {
+                        minutes = Integer.parseInt(interval.getText().toString().trim());
+                    } catch (Exception ignored) {
+                    }
+                    Apps_26_10_25.setEncourageInterval(activity, pkg, minutes);
+                    Apps_26_10_25.setEncourageOnOpen(activity, pkg, onOpen.isChecked());
+                    Apps_26_10_25.setEncourageDuring(activity, pkg, during.isChecked());
+                    Apps_26_10_25.setPresetEnabled(activity, pkg, preset.isChecked());
+                    Apps_26_10_25.setRotation(activity, pkg,
+                            group.getCheckedRadioButtonId() == sequentialId ? "sequential" : "random");
+                    java.util.List<String> lines = new java.util.ArrayList<>();
+                    for (String line : custom.getText().toString().split("\n")) {
+                        if (!line.trim().isEmpty()) lines.add(line.trim());
+                    }
+                    Apps_26_10_25.setCustomEncourageMessages(activity, pkg, lines);
+                    refresh();
+                })
+                .show();
     }
 
     private void renderApps() {

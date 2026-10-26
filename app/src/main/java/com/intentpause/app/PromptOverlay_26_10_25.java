@@ -72,7 +72,7 @@ public final class PromptOverlay_26_10_25 {
         return detail == null ? "" : detail;
     }
 
-    public void showPrompt(String pkg, String label, String savedDetail) {
+    public void showPrompt(String pkg, String label, String savedDetail, int todayOpenCount) {
         detailInput = null;
         detail = savedDetail == null ? "" : savedDetail;
         if (!ensureView()) return;
@@ -80,6 +80,11 @@ public final class PromptOverlay_26_10_25 {
         content.addView(headerWithClose(pkg, label, () -> listener.onDecline()));
         Ui_26_10_25.add(content, Ui_26_10_25.title(context, "这次打开，想做什么？"), 22);
         Ui_26_10_25.add(content, Ui_26_10_25.subtitle(context, "选一个目的，再选时长。"), 10);
+        if (todayOpenCount > 0) {
+            TextView count = Ui_26_10_25.text(context,
+                    "今天第 " + todayOpenCount + " 次打开", 12, Ui_26_10_25.MUTED, false);
+            Ui_26_10_25.add(content, count, 8);
+        }
 
         LinearLayout rowA = new LinearLayout(context);
         rowA.setOrientation(LinearLayout.HORIZONTAL);

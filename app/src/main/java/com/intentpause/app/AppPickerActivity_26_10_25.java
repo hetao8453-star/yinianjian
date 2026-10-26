@@ -34,6 +34,7 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
     private String term = "";
     private int shown;
     private boolean sensitiveMode;
+    private boolean encourageMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,12 +48,14 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
         root.setLayoutParams(rootParams);
 
         sensitiveMode = "sensitive".equals(getIntent().getStringExtra("mode"));
+        encourageMode = "encourage".equals(getIntent().getStringExtra("mode"));
         LinearLayout header = Ui_26_10_25.horizontal(this);
         header.setPadding(Ui_26_10_25.dp(this, 12), Ui_26_10_25.dp(this, 8),
                 Ui_26_10_25.dp(this, 12), Ui_26_10_25.dp(this, 6));
         header.addView(Ui_26_10_25.iconButton(this, R.drawable.ic_back, 44, this::finish));
         header.addView(Ui_26_10_25.text(this,
-                        sensitiveMode ? "敏感应用" : "选择应用", 19, Ui_26_10_25.INK, true),
+                        sensitiveMode ? "敏感应用" : encourageMode ? "鼓励应用" : "选择应用",
+                        19, Ui_26_10_25.INK, true),
                 new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         selectedCount = Ui_26_10_25.text(this, "", 12, Ui_26_10_25.MUTED, false);
         selectedCount.setPadding(0, 0, Ui_26_10_25.dp(this, 10), 0);
@@ -61,9 +64,10 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
         header.addView(done);
         root.addView(header);
 
-        if (sensitiveMode) {
-            TextView note = Ui_26_10_25.hint(this,
-                    "这些应用打开时不会停一下，也不记录。适合银行、密码、支付类。");
+        if (sensitiveMode || encourageMode) {
+            TextView note = Ui_26_10_25.hint(this, sensitiveMode
+                    ? "这些应用打开时不会停一下，也不记录。适合银行、密码、支付类。"
+                    : "这些应用打开时不限制，只在打开时和使用中给一句轻鼓励。");
             note.setPadding(Ui_26_10_25.dp(this, 16), 0, Ui_26_10_25.dp(this, 16),
                     Ui_26_10_25.dp(this, 8));
             root.addView(note);
@@ -195,7 +199,7 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
                 LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         CheckBox check = new CheckBox(this);
         check.setChecked(isSelected(pkg));
-        check.setContentDescription((sensitiveMode ? "标记" : "监测") + label);
+        check.setContentDescription((sensitiveMode ? "标记" : encourageMode ? "鼓励" : "监测") + label);
         check.setOnCheckedChangeListener((buttonView, isChecked) -> {
             setSelected(pkg, isChecked);
             if (sensitiveMode && isChecked) askDeleteHistory(pkg, label);
@@ -218,18 +222,38 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
     }
 
     private boolean isSelected(String pkg) {
-        return sensitiveMode ? Apps_26_10_25.sensitive(this, pkg)
-                : Apps_26_10_25.selected(this, pkg);
+        if (sensitiveMode) return Apps_26_10_25.sensitive(this, pkg);
+        if (encourageMode) return Apps_26_10_25.encouraged(this, pkg);
+        return Apps_26_10_25.selected(this, pkg);
     }
 
     private void setSelected(String pkg, boolean on) {
-        if (sensitiveMode) Apps_26_10_25.setSensitive(this, pkg, on);
-        else Apps_26_10_25.setSelected(this, pkg, on);
+        if (sensitiveMode) {
+            Apps_26_10_25.setSensitive(this, pkg, on);
+            if (on) {
+                Apps_26_10_25.setSelected(this, pkg, false);
+                Apps_26_10_25.setEncouraged(this, pkg, false);
+            }
+        } else if (encourageMode) {
+            Apps_26_10_25.setEncouraged(this, pkg, on);
+            if (on) {
+                Apps_26_10_25.setSelected(this, pkg, false);
+                Apps_26_10_25.setSensitive(this, pkg, false);
+            }
+        } else {
+            Apps_26_10_25.setSelected(this, pkg, on);
+            if (on) {
+                Apps_26_10_25.setEncouraged(this, pkg, false);
+                Apps_26_10_25.setSensitive(this, pkg, false);
+            }
+        }
     }
 
     private void updateCount() {
         int count = sensitiveMode ? Apps_26_10_25.sensitivePackages(this).size()
+                : encourageMode ? Apps_26_10_25.encouragePackages(this).size()
                 : Apps_26_10_25.selectedPackages(this).size();
-        selectedCount.setText((sensitiveMode ? "已标记 " : "已选 ") + count + " 个");
+        selectedCount.setText((sensitiveMode ? "已标记 " : encourageMode ? "已鼓励 " : "已选 ")
+                + count + " 个");
     }
 }
