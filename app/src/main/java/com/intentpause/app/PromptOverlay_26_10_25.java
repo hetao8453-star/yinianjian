@@ -31,6 +31,8 @@ public final class PromptOverlay_26_10_25 {
 
         void onEmergency();
 
+        void onTemporaryEncourage();
+
         void onDecline();
 
         void onDuration(int minutes, String detail);
@@ -78,6 +80,13 @@ public final class PromptOverlay_26_10_25 {
         if (!ensureView()) return;
         LinearLayout content = Ui_26_10_25.vertical(context);
         content.addView(headerWithClose(pkg, label, () -> listener.onDecline()));
+        ImageView mascot = new ImageView(context);
+        mascot.setImageResource(R.drawable.mascot_nuonuo_cutout);
+        LinearLayout.LayoutParams mascotLp = new LinearLayout.LayoutParams(
+                Ui_26_10_25.dp(context, 46), Ui_26_10_25.dp(context, 46));
+        mascotLp.topMargin = Ui_26_10_25.dp(context, 8);
+        content.addView(mascot, mascotLp);
+        mascot.post(() -> Ui_26_10_25.nodOnce(mascot));
         Ui_26_10_25.add(content, Ui_26_10_25.title(context, "这次打开，想做什么？"), 22);
         Ui_26_10_25.add(content, Ui_26_10_25.subtitle(context, "选一个目的，再选时长。"), 10);
         if (todayOpenCount > 0) {
@@ -97,6 +106,12 @@ public final class PromptOverlay_26_10_25 {
         rowB.addView(purposeCard("放松一下", () -> listener.onPurpose("放松一下")), weight(context));
         rowB.addView(purposeCard("还没想清楚", () -> listener.onPurpose("还没想清楚")), weight(context));
         Ui_26_10_25.add(content, rowB, 12);
+
+        Button encourage = Ui_26_10_25.button(context, "这次给我鼓励", false);
+        encourage.setOnClickListener(v -> listener.onTemporaryEncourage());
+        Ui_26_10_25.add(content, encourage, 20);
+        Ui_26_10_25.add(content, Ui_26_10_25.hint(context,
+                "仅本次；结束后恢复原来的提醒设置。"), 7);
 
         Button emergency = Ui_26_10_25.button(context, "应急使用 3 分钟", false);
         emergency.setOnClickListener(v -> listener.onEmergency());

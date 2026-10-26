@@ -84,6 +84,7 @@ public final class Ui_26_10_25 {
         Button b = new Button(c);
         b.setText(s);
         b.setAllCaps(false);
+        b.setTypeface(Typeface.SANS_SERIF);
         b.setTextSize(15);
         b.setTextColor(selected ? Color.WHITE : GREEN);
         b.setBackground(ripple(c, selected ? GREEN : GREEN_SOFT, 999));
@@ -101,12 +102,14 @@ public final class Ui_26_10_25 {
         v.setTextSize(sp);
         v.setTextColor(color);
         v.setIncludeFontPadding(false);
-        if (bold) v.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        v.setTypeface(Typeface.SANS_SERIF, bold ? Typeface.BOLD : Typeface.NORMAL);
         return v;
     }
 
     public static TextView title(Context c, CharSequence s) {
-        return text(c, s, 26, INK, true);
+        TextView title = text(c, s, 26, INK, true);
+        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        return title;
     }
 
     public static TextView subtitle(Context c, CharSequence s) {
@@ -129,6 +132,7 @@ public final class Ui_26_10_25 {
         Button b = new Button(c);
         b.setText(s);
         b.setAllCaps(false);
+        b.setTypeface(Typeface.SANS_SERIF);
         b.setTextSize(16);
         b.setTextColor(primary ? Color.WHITE : GREEN);
         b.setBackground(ripple(c, primary ? GREEN : GREEN_SOFT, 14));
@@ -205,7 +209,7 @@ public final class Ui_26_10_25 {
         }
     }
 
-    /** 小缓的轻微呼吸，幅度很小；系统减弱动画时不启动。 */
+    /** 糯糯轻轻呼吸两次后回到静态；系统减弱动画时不启动。 */
     public static void breathe(View view) {
         if (view == null || reduceMotion(view.getContext())) return;
         android.animation.ObjectAnimator scaleX = android.animation.ObjectAnimator.ofFloat(
@@ -215,11 +219,20 @@ public final class Ui_26_10_25 {
         for (android.animation.ObjectAnimator animator : new android.animation.ObjectAnimator[]{scaleX, scaleY}) {
             animator.setDuration(2400);
             animator.setStartDelay(800);
-            animator.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+            animator.setRepeatCount(1);
             animator.setRepeatMode(android.animation.ValueAnimator.REVERSE);
             animator.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
             animator.start();
         }
+    }
+
+    public static void nodOnce(View view) {
+        if (view == null || reduceMotion(view.getContext())) return;
+        view.setPivotX(view.getWidth() / 2f);
+        view.setPivotY(view.getHeight());
+        view.animate().rotation(7f).setDuration(160)
+                .withEndAction(() -> view.animate().rotation(0f).setDuration(210).start())
+                .start();
     }
 
     public static void toast(Context c, CharSequence s) {

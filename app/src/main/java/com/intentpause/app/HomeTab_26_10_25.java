@@ -50,14 +50,16 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
 
         LinearLayout titleRow = Ui_26_10_25.horizontal(activity);
         ImageView mascot = new ImageView(activity);
-        mascot.setImageResource(R.drawable.mascot_xiaohuan);
+        mascot.setImageResource(R.drawable.mascot_nuonuo_cutout);
         titleRow.addView(mascot, new LinearLayout.LayoutParams(
                 Ui_26_10_25.dp(activity, 44), Ui_26_10_25.dp(activity, 44)));
         Ui_26_10_25.breathe(mascot);
         LinearLayout titleBox = Ui_26_10_25.vertical(activity);
         titleBox.setPadding(Ui_26_10_25.dp(activity, 10), 0, 0, 0);
-        titleBox.addView(Ui_26_10_25.text(activity, "一念间", 28, Ui_26_10_25.INK, true));
-        titleBox.addView(Ui_26_10_25.text(activity, "陪你停一下，也陪你做下去。", 14, Ui_26_10_25.MUTED, false));
+        TextView brand = Ui_26_10_25.text(activity, "一念间", 28, Ui_26_10_25.INK, true);
+        brand.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
+        titleBox.addView(brand);
+        titleBox.addView(Ui_26_10_25.text(activity, "这一念，听自己。", 14, Ui_26_10_25.MUTED, false));
         titleRow.addView(titleBox);
         Ui_26_10_25.add(page, titleRow, 0);
 
@@ -89,7 +91,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         Ui_26_10_25.add(page, statusCard, 22);
 
         LinearLayout sectionRow = Ui_26_10_25.horizontal(activity);
-        TextView section = Ui_26_10_25.section(activity, "受控应用");
+        TextView section = Ui_26_10_25.section(activity, "提醒我想一想");
         sectionRow.addView(section, new LinearLayout.LayoutParams(0,
                 LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         TextView manage = Ui_26_10_25.action(activity, "管理", () ->
@@ -106,7 +108,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         Ui_26_10_25.add(page, add, 14);
 
         LinearLayout encourageHead = Ui_26_10_25.horizontal(activity);
-        TextView encourageSection = Ui_26_10_25.section(activity, "鼓励应用");
+        TextView encourageSection = Ui_26_10_25.section(activity, "给我一点鼓励");
         encourageHead.addView(encourageSection, new LinearLayout.LayoutParams(0,
                 LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         TextView manageEncourage = Ui_26_10_25.action(activity, "管理", () ->
@@ -125,9 +127,26 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         LinearLayout tip = Ui_26_10_25.card(activity);
         tip.addView(Ui_26_10_25.text(activity, "怎么工作", 15, Ui_26_10_25.INK, true));
         tip.addView(Ui_26_10_25.hint(activity,
-                "每个应用可以单独设置默认时长（3/10/30 或自定义）；到时如果还在应用内会复查；"
-                        + "短暂离开不超过 1 分钟，原计时不变。"));
+                "提醒应用：切到别的应用不超过 1 分钟，原截止时间不变；"
+                        + "回桌面会结束本次。"
+                        + "鼓励应用按亮屏前台时间累计。"));
         Ui_26_10_25.add(page, tip, 26);
+
+        LinearLayout notes = Ui_26_10_25.card(activity);
+        notes.addView(Ui_26_10_25.text(activity, "糯糯的小纸条", 16, Ui_26_10_25.INK, true));
+        Ui_26_10_25.add(notes, Ui_26_10_25.hint(activity,
+                "想看时再打开，不会在使用中弹出长文。"), 8);
+        TextView readNote = Ui_26_10_25.action(activity, "今天读到这里", () ->
+                NuoNuoNotes_26_10_26.show(activity, 0));
+        TextView startNote = Ui_26_10_25.action(activity, "先从一点开始", () ->
+                NuoNuoNotes_26_10_26.show(activity, 1));
+        TextView restNote = Ui_26_10_25.action(activity, "就是想放松一下", () ->
+                NuoNuoNotes_26_10_26.show(activity, 2));
+        for (TextView note : new TextView[]{readNote, startNote, restNote}) {
+            note.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+            Ui_26_10_25.add(notes, note, 4);
+        }
+        Ui_26_10_25.add(page, notes, 12);
 
         refresh();
     }
@@ -217,7 +236,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         textBox.setPadding(Ui_26_10_25.dp(activity, 12), 0, 0, 0);
         textBox.addView(Ui_26_10_25.text(activity, Apps_26_10_25.label(activity, pkg),
                 16, Ui_26_10_25.INK, true));
-        String note = "每 " + Apps_26_10_25.encourageInterval(activity, pkg) + " 分钟轻鼓励";
+        String note = "累计使用 " + Apps_26_10_25.encourageInterval(activity, pkg) + " 分钟轻鼓励";
         if (!Apps_26_10_25.encourageOnOpen(activity, pkg)) note = "使用中轻鼓励";
         if (!Apps_26_10_25.encourageDuring(activity, pkg)) note = "打开时轻鼓励";
         textBox.addView(Ui_26_10_25.text(activity, note + " · 点按设置",
@@ -261,14 +280,14 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
 
         EditText interval = new EditText(activity);
         interval.setInputType(InputType.TYPE_CLASS_NUMBER);
-        interval.setHint("间隔分钟（10–120）");
+        interval.setHint("累计前台分钟（10–120）");
         interval.setText(String.valueOf(Apps_26_10_25.encourageInterval(activity, pkg)));
         interval.setTextColor(Ui_26_10_25.INK);
         interval.setHintTextColor(Ui_26_10_25.MUTED);
         box.addView(interval);
 
         CheckBox preset = new CheckBox(activity);
-        preset.setText("使用内置鼓励文案");
+        preset.setText("使用中轮换内置文案");
         preset.setTextColor(Ui_26_10_25.INK);
         preset.setChecked(Apps_26_10_25.presetEnabled(activity, pkg));
         box.addView(preset);
@@ -295,7 +314,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         box.addView(group);
 
         EditText custom = new EditText(activity);
-        custom.setHint("自己写几句，每行一句（可留空）");
+        custom.setHint("开场用第一句；每行一句（可留空）");
         custom.setHintTextColor(Ui_26_10_25.MUTED);
         custom.setTextColor(Ui_26_10_25.INK);
         custom.setTextSize(14);
@@ -309,7 +328,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
                 .setView(scroll)
                 .setNegativeButton("取消", null)
                 .setPositiveButton("保存", (dialog, which) -> {
-                    int minutes = 30;
+                    int minutes = 20;
                     try {
                         minutes = Integer.parseInt(interval.getText().toString().trim());
                     } catch (Exception ignored) {

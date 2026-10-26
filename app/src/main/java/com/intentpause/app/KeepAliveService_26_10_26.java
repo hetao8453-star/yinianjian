@@ -76,7 +76,7 @@ public class KeepAliveService_26_10_26 extends Service {
         return new NotificationCompat.Builder(this, CHANNEL)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("一念间正在运行")
-                .setContentText("小缓在，陪你照看自己。")
+                .setContentText("糯糯在，陪你照看自己。")
                 .setPriority(NotificationCompat.PRIORITY_MIN)
                 .setOngoing(true)
                 .setSilent(true)

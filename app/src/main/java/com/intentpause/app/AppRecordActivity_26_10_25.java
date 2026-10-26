@@ -181,6 +181,7 @@ public class AppRecordActivity_26_10_25 extends AppCompatActivity {
         if ("interrupted".equals(status)) return "服务中断";
         if ("switched".equals(status)) return "切换到其他应用";
         if ("left_natural".equals(status)) return "已离开";
+        if ("switched_to_encourage".equals(status)) return "本次改为鼓励";
         if ("pending".equals(status)) return "未完成";
         return status;
     }

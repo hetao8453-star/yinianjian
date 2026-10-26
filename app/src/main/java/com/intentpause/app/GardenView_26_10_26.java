@@ -29,10 +29,10 @@ public class GardenView_26_10_26 extends View {
         setLayerType(LAYER_TYPE_SOFTWARE, null);
         paint.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
         try {
-            mascot = BitmapFactory.decodeResource(getResources(), R.drawable.mascot_xiaohuan);
+            mascot = BitmapFactory.decodeResource(getResources(), R.drawable.mascot_nuonuo_cutout);
         } catch (Exception ignored) {
         }
-        setContentDescription("小缓的花园");
+        setContentDescription("糯糯的花园");
     }
 
     public void setData(int controlled, int encouraged, int total, boolean animate) {

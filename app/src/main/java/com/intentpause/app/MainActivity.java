@@ -85,19 +85,10 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         if (DailySummary_26_10_26.hasPending(this)) {
+            String pendingDate = DailySummary_26_10_26.pendingDate(this);
             DailySummary_26_10_26.clearPending(this);
-            ScrollView scroll = new ScrollView(this);
-            TextView text = Ui_26_10_25.text(this,
-                    DailySummary_26_10_26.todayText(this), 14, Ui_26_10_25.INK, false);
-            text.setPadding(Ui_26_10_25.dp(this, 20), Ui_26_10_25.dp(this, 8),
-                    Ui_26_10_25.dp(this, 20), Ui_26_10_25.dp(this, 8));
-            text.setLineSpacing(Ui_26_10_25.dp(this, 3), 1f);
-            scroll.addView(text);
-            new AlertDialog.Builder(this)
-                    .setTitle("今日总结")
-                    .setView(scroll)
-                    .setPositiveButton("好", null)
-                    .show();
+            startActivity(new android.content.Intent(this, SummaryActivity_26_10_26.class)
+                    .putExtra(DailySummary_26_10_26.EXTRA_DATE, pendingDate));
         }
     }
 

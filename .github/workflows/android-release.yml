@@ -61,7 +61,7 @@ jobs:
         with:
           name: 一念间 ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
-          generate_release_notes: true
+          body_path: RELEASE_NOTES_${{ github.ref_name }}.md
           files: |
             dist/yinianjian_${{ github.ref_name }}.apk
             dist/yinianjian_${{ github.ref_name }}.sha256

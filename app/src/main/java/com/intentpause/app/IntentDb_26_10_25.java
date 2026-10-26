@@ -16,7 +16,7 @@ import java.util.Set;
 /** 本地会话与事件记录。只存本应用观察到的事实，不联网、不上传。 */
 public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
     private static final String DB_NAME = "intent.db";
-    private static final int DB_VERSION = 2;
+    private static final int DB_VERSION = 3;
     private static volatile IntentDb_26_10_25 instance;
 
     public static IntentDb_26_10_25 get(Context context) {
@@ -75,6 +75,8 @@ public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion < 2) createEncourageTable(db);
+        if (oldVersion == 2) db.execSQL(
+                "ALTER TABLE encourage_sessions ADD COLUMN temporary INTEGER DEFAULT 0");
     }
 
     private void createEncourageTable(SQLiteDatabase db) {
@@ -83,7 +85,7 @@ public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
                 + "pkg TEXT NOT NULL, label TEXT,"
                 + "started_wall INTEGER NOT NULL, ended_wall INTEGER DEFAULT 0,"
                 + "foreground_ms INTEGER DEFAULT 0,"
-                + "status TEXT DEFAULT 'active')");
+                + "status TEXT DEFAULT 'active', temporary INTEGER DEFAULT 0)");
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_encourage_started ON encourage_sessions(started_wall)");
     }
 
@@ -385,11 +387,13 @@ public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         db.delete("events", "pkg=?", new String[]{pkg});
         db.delete("sessions", "pkg=?", new String[]{pkg});
+        db.delete("encourage_sessions", "pkg=?", new String[]{pkg});
     }
 
     public void clearAllRecords() {
         SQLiteDatabase db = getWritableDatabase();
         db.delete("sessions", null, null);
+        db.delete("encourage_sessions", null, null);
         db.delete("events", null, null);
         db.delete("notes", null, null);
         db.delete("service_log", null, null);
@@ -417,10 +421,15 @@ public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
     // ---------------- 鼓励应用 ----------------
 
     public long startEncourageSession(String pkg, String label, long wall) {
+        return startEncourageSession(pkg, label, wall, false);
+    }
+
+    public long startEncourageSession(String pkg, String label, long wall, boolean temporary) {
         ContentValues v = new ContentValues();
         v.put("pkg", pkg);
         v.put("label", label);
         v.put("started_wall", wall);
+        v.put("temporary", temporary ? 1 : 0);
         return getWritableDatabase().insert("encourage_sessions", null, v);
     }
 
@@ -536,7 +545,8 @@ public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
     public List<EncourageAppSummary> encourageAppSummaries(long begin, long end) {
         Map<String, EncourageAppSummary> map = new HashMap<>();
         try (Cursor c = getReadableDatabase().rawQuery(
-                "SELECT pkg, IFNULL(label,''), COUNT(*), IFNULL(SUM(foreground_ms),0) "
+                "SELECT pkg, IFNULL(label,''), COUNT(*), IFNULL(SUM(foreground_ms),0), "
+                        + "IFNULL(SUM(temporary),0) "
                         + "FROM encourage_sessions WHERE started_wall>=? AND started_wall<? "
                         + "GROUP BY pkg ORDER BY COUNT(*) DESC", toStrings(begin, end))) {
             while (c.moveToNext()) {
@@ -545,6 +555,7 @@ public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
                 a.label = c.getString(1);
                 a.opens = c.getInt(2);
                 a.foregroundMs = c.getLong(3);
+                a.temporaryOpens = c.getInt(4);
                 map.put(a.pkg, a);
             }
         }
@@ -635,5 +646,6 @@ public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
         public int opens;
         public int prompts;
         public long foregroundMs;
+        public int temporaryOpens;
     }
 }

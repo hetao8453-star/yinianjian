@@ -14,7 +14,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-/** 鼓励应用顶部轻提示：不触摸、不抢焦点，2.5 秒自动消失。 */
+/** 鼓励应用底部轻提示：不触摸、不抢焦点，3 秒自动消失。 */
 public class EncourageBanner_26_10_26 {
     private final Context context;
     private final WindowManager wm;
@@ -42,14 +42,14 @@ public class EncourageBanner_26_10_26 {
         card.setElevation(dp(6));
 
         ImageView mascot = new ImageView(context);
-        mascot.setImageResource(R.drawable.mascot_xiaohuan);
+        mascot.setImageResource(R.drawable.mascot_nuonuo_cutout);
         card.addView(mascot, new LinearLayout.LayoutParams(dp(38), dp(38)));
 
         TextView text = new TextView(context);
         text.setText(message);
         text.setTextSize(14);
         text.setTextColor(Ui_26_10_25.INK);
-        text.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
+        text.setTypeface(Typeface.SANS_SERIF, Typeface.NORMAL);
         text.setLineSpacing(dp(2), 1f);
         LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(0,
                 LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
@@ -65,13 +65,14 @@ public class EncourageBanner_26_10_26 {
                         | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                         | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT);
-        params.gravity = Gravity.TOP | Gravity.START;
+        params.gravity = Gravity.BOTTOM | Gravity.START;
         params.x = dp(16);
-        params.y = dp(54);
+        params.y = dp(44);
         try {
             wm.addView(card, params);
             view = card;
-            handler.postDelayed(hideTask, 2500);
+            mascot.post(() -> Ui_26_10_25.nodOnce(mascot));
+            handler.postDelayed(hideTask, 3000);
         } catch (RuntimeException ignored) {
         }
     }

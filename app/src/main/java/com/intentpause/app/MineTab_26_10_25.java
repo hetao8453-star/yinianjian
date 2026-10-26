@@ -85,7 +85,7 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
                 Perms_26_10_25.openAccessibilitySettings(activity));
 
         LinearLayout row2 = statusRow(statusRows);
-        notification = statusRefs(row2, "通知");
+        notification = statusRefs(row2, "通知（推荐）");
         notificationAction = rowAction(row2, "去开启", this::askNotifications);
 
         LinearLayout row3 = statusRow(statusRows);
@@ -97,8 +97,8 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         });
 
         LinearLayout row4 = statusRow(statusRows);
-        autostart = statusRefs(row4, "自启动 / 后台高耗电");
-        rowAction(row4, "去设置", () -> Perms_26_10_25.openAutostartSettings(activity));
+        autostart = statusRefs(row4, "自启动");
+        rowAction(row4, "确认", this::askAutostart);
 
         LinearLayout row5 = statusRow(statusRows);
         protection = statusRefs(row5, "后台保护");
@@ -163,7 +163,7 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         LinearLayout about = Ui_26_10_25.card(activity);
         about.addView(Ui_26_10_25.text(activity, "关于一念间", 15, Ui_26_10_25.INK, true));
         about.addView(Ui_26_10_25.hint(activity,
-                "v5 本地验证版 · 不联网 · 不读屏 · 记录只在本机。\n"
+                "v6.0 · 不联网 · 不读屏 · 记录只在本机。\n"
                         + "当前是自用验证包，不是公开发布版本。"));
         Ui_26_10_25.add(page, about, 20);
 
@@ -251,17 +251,17 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
 
         boolean notificationsOn = Perms_26_10_25.notificationsGranted(activity);
         update(notification, notificationsOn,
-                notificationsOn ? "已允许（仅兜底与开机提示）" : "未允许；不影响确认页");
+                notificationsOn ? "已开启 · 可收到每日总结" : "未开启 · 总结可在下次打开时看");
         notificationAction.setText(notificationsOn ? "设置" : "去开启");
 
         boolean batteryOn = Perms_26_10_25.ignoringBatteryOptimizations(activity);
         update(battery, batteryOn,
-                batteryOn ? "已允许，减少被清理" : "未设置，可能更早被清理");
+                batteryOn ? "系统已允许忽略电池优化" : "仍受 Android 电池优化管理");
         batteryAction.setText(batteryOn ? "设置" : "去设置");
 
         boolean autostartOn = Perms_26_10_25.autostartAcknowledged(activity);
         update(autostart, autostartOn,
-                autostartOn ? "已允许（手动确认）" : "未确认；可在系统设置允许");
+                autostartOn ? "已允许（你手动确认）" : "未确认 · 请手动确认");
         update(protection, KeepAliveService_26_10_26.running,
                 KeepAliveService_26_10_26.running ? "前台服务运行中，降低被清理概率" : "未运行；打开 App 会尝试启动");
 
@@ -286,7 +286,8 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
             summarySubtitle.setText(minutes < 0 ? "还没设置时间 · 点按设置"
                     : "每天 " + DailySummary_26_10_26.timeText(activity) + " · 点按查看");
         }
-        int issues = (accessibilityOn ? 0 : 1) + (batteryOn ? 0 : 1) + (autostartOn ? 0 : 1);
+        int issues = (accessibilityOn ? 0 : 1) + (batteryOn ? 0 : 1)
+                + (autostartOn ? 0 : 1) + (notificationsOn ? 0 : 1);
         statusSummary.setText((accessibilityOn ? "提醒已开启" : "提醒未开启")
                 + (issues > 0 ? " · " + issues + " 项可优化" : ""));
         if (autostartPending) {
@@ -302,19 +303,9 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
             pickSummaryTime();
             return;
         }
-        ScrollView scroll = new ScrollView(activity);
-        TextView text = Ui_26_10_25.text(activity,
-                DailySummary_26_10_26.todayText(activity), 14, Ui_26_10_25.INK, false);
-        text.setPadding(Ui_26_10_25.dp(activity, 20), Ui_26_10_25.dp(activity, 8),
-                Ui_26_10_25.dp(activity, 20), Ui_26_10_25.dp(activity, 8));
-        text.setLineSpacing(Ui_26_10_25.dp(activity, 3), 1f);
-        scroll.addView(text);
-        new AlertDialog.Builder(activity)
-                .setTitle("今日总结")
-                .setView(scroll)
-                .setNegativeButton("关闭", null)
-                .setPositiveButton("改时间", (dialog, which) -> pickSummaryTime())
-                .show();
+        activity.startActivity(new Intent(activity, SummaryActivity_26_10_26.class)
+                .putExtra(DailySummary_26_10_26.EXTRA_DATE,
+                        StatsMath_26_10_25.dateKey(System.currentTimeMillis())));
     }
 
     private void pickSummaryTime() {
@@ -331,11 +322,11 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
 
     private void askAutostart() {
         new AlertDialog.Builder(activity)
-                .setTitle("自启动已经允许了吗？")
-                .setMessage("系统不允许 App 读取厂商的自启动开关，只能由你确认。")
-                .setNegativeButton("还没", (dialog, which) -> {
-                    Perms_26_10_25.setAutostartAcknowledged(activity, false);
-                    refresh();
+                .setTitle("自启动状态")
+                .setMessage("一念间无法读取手机的自启动开关。设置好了，就由你确认。")
+                .setNegativeButton("去系统设置", (dialog, which) -> {
+                    autostartPending = true;
+                    Perms_26_10_25.openAutostartSettings(activity);
                 })
                 .setPositiveButton("已允许", (dialog, which) -> {
                     Perms_26_10_25.setAutostartAcknowledged(activity, true);

@@ -65,19 +65,18 @@ public class PermissionGuideActivity_26_10_25 extends AppCompatActivity {
         accessibility.addView(sectionTitle("无障碍服务（唯一必需）"));
         accessibilityState = Ui_26_10_25.hint(this, "");
         accessibility.addView(accessibilityState);
-        accessibility.addView(body("一念间只通过它知道：你选的那几个应用什么时候来到前台。"
-                + "只取应用包名和窗口切换，不读屏幕文字、不读聊天内容、不联网。"));
+        accessibility.addView(body("用于识别你选的应用何时打开，只读取包名与窗口切换。"
+                + "不读屏幕文字或聊天内容。"));
         accessibility.addView(buttonRow("去系统设置开启", () -> Perms_26_10_25.openAccessibilitySettings(this)));
-        accessibility.addView(body("系统不允许任何 App 自己打开无障碍，也不能在你关闭后再替你打开——"
-                + "这是 Android 的安全设计。安装新包后，系统也可能要求你重新确认一次。"));
+        accessibility.addView(body("无障碍需由你在系统中开启。更新应用后，系统可能要求重新确认。"));
         Ui_26_10_25.add(list, accessibility, 10);
 
         LinearLayout notification = Ui_26_10_25.card(this);
-        notification.addView(sectionTitle("通知（可选）"));
+        notification.addView(sectionTitle("通知（推荐）"));
         notificationState = Ui_26_10_25.hint(this, "");
         notification.addView(notificationState);
-        notification.addView(body("只用于两种低频场景：确认页没能显示时的兜底提醒；"
-                + "开机后发现提醒服务没开启时提示一次。拒绝也不影响确认页和记录。"));
+        notification.addView(body("开启后可在通知栏收到每日总结，也用于提醒服务异常时提示。"
+                + "关闭后不影响确认页；总结会在下次打开一念间时补看。"));
         notification.addView(buttonRow("去开启通知", this::askNotifications));
         Ui_26_10_25.add(list, notification, 10);
 
@@ -85,8 +84,8 @@ public class PermissionGuideActivity_26_10_25 extends AppCompatActivity {
         battery.addView(sectionTitle("电池优化（建议）"));
         batteryState = Ui_26_10_25.hint(this, "");
         battery.addView(batteryState);
-        battery.addView(body("部分 Android 系统的省电策略会清理后台，导致提醒突然不工作。"
-                + "允许忽略电池优化能减少这种情况，但系统仍可能按自己的策略清理。"));
+        battery.addView(body("可减少后台被清理的情况。这里检测的是 Android 电池优化状态，"
+                + "厂商的“后台高耗电”开关需在系统中另行查看。"));
         battery.addView(buttonRow("去设置后台限制", () -> {
             if (!Perms_26_10_25.requestIgnoreBatteryOptimizations(this)) {
                 Ui_26_10_25.toast(this, "没能打开电池设置，请到系统设置里手动找一念间");
@@ -95,15 +94,18 @@ public class PermissionGuideActivity_26_10_25 extends AppCompatActivity {
         Ui_26_10_25.add(list, battery, 10);
 
         LinearLayout autostart = Ui_26_10_25.card(this);
-        autostart.addView(sectionTitle("自启动 / 后台高耗电（系统设置，不是权限）"));
-        autostart.addView(body("Android 没有可以直接申请的“后台运行”权限。部分手机建议手动完成三件事：\n"
-                + "1. 系统设置 → 应用管理 → 一念间 → 允许自启动/后台活动；\n"
-                + "2. 电池设置 → 一念间 → 允许后台高耗电；\n"
-                + "3. 最近任务里锁定一念间的卡片，避免被一键清理。\n"
-                + "不同品牌的菜单名称和位置不同。开机后无障碍是否自动恢复，取决于系统是否保留授权。"));
+        autostart.addView(sectionTitle("自启动（系统设置）"));
+        autostart.addView(body("若手机提供自启动开关，可在系统中允许一念间。"
+                + "应用无法读取这个开关；设置后请返回“我的”手动确认。"));
         autostart.addView(buttonRow("打开自启动设置", () ->
                 Perms_26_10_25.openAutostartSettings(this)));
         Ui_26_10_25.add(list, autostart, 10);
+
+        LinearLayout background = Ui_26_10_25.card(this);
+        background.addView(sectionTitle("后台高耗电（系统设置）"));
+        background.addView(body("部分手机另有“允许后台高耗电”开关。它与上面的电池优化状态不同，"
+                + "一念间无法自动读取；如提醒常被中断，可到系统电池设置检查。"));
+        Ui_26_10_25.add(list, background, 10);
 
         LinearLayout safety = Ui_26_10_25.card(this);
         safety.addView(sectionTitle("安全边界"));
@@ -129,8 +131,8 @@ public class PermissionGuideActivity_26_10_25 extends AppCompatActivity {
 
         LinearLayout notUsed = Ui_26_10_25.card(this);
         notUsed.addView(sectionTitle("只申请这些权限"));
-        notUsed.addView(body("必需：无障碍服务。只用来识别前台应用包名与窗口切换。\n"
-                + "可选：通知（兜底与开机提示）、前台服务、开机检查、电池优化白名单。\n\n"
+        notUsed.addView(body("必需：无障碍服务。只识别前台应用包名与窗口切换。\n"
+                + "推荐：通知，用于每日总结和异常提示。\n\n"
                 + "不申请：联网、使用情况访问、悬浮窗、存储、读取屏幕内容、读取通知或剪贴板。"));
         Ui_26_10_25.add(list, notUsed, 10);
     }
@@ -150,7 +152,7 @@ public class PermissionGuideActivity_26_10_25 extends AppCompatActivity {
         Button button = Ui_26_10_25.button(this, text, false);
         button.setOnClickListener(v -> run.run());
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, Ui_26_10_25.dp(this, 48));
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         lp.topMargin = Ui_26_10_25.dp(this, 12);
         button.setLayoutParams(lp);
         return button;
@@ -162,7 +164,7 @@ public class PermissionGuideActivity_26_10_25 extends AppCompatActivity {
         accessibilityState.setText(acc ? "当前：已开启" : "当前：未开启");
         accessibilityState.setTextColor(acc ? Ui_26_10_25.GREEN : Ui_26_10_25.WARN);
         boolean notify = Perms_26_10_25.notificationsGranted(this);
-        notificationState.setText(notify ? "当前：已允许" : "当前：未允许（不影响主流程）");
+        notificationState.setText(notify ? "当前：已允许" : "当前：未允许 · 收不到通知栏总结");
         notificationState.setTextColor(notify ? Ui_26_10_25.GREEN : Ui_26_10_25.MUTED);
         boolean battery = Perms_26_10_25.ignoringBatteryOptimizations(this);
         batteryState.setText(battery ? "当前：已忽略电池优化" : "当前：仍受系统电池策略管理");

@@ -68,7 +68,7 @@ public class RecordsTab_26_10_26 extends ScrollView implements Refreshable_26_10
         LinearLayout gardenCard = Ui_26_10_25.card(activity);
         LinearLayout gardenHead = Ui_26_10_25.horizontal(activity);
         gardenHead.setGravity(Gravity.CENTER_VERTICAL);
-        gardenHead.addView(Ui_26_10_25.text(activity, "小缓的花园", 16,
+        gardenHead.addView(Ui_26_10_25.text(activity, "糯糯的花园", 16,
                 Ui_26_10_25.INK, true), new LinearLayout.LayoutParams(0,
                 LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         gardenCount = Ui_26_10_25.text(activity, "", 12, Ui_26_10_25.MUTED, false);
@@ -342,7 +342,9 @@ public class RecordsTab_26_10_26 extends ScrollView implements Refreshable_26_10
                 IntentDb_26_10_25.EncourageAppSummary app = encouraged.get(i);
                 detailRow(app.pkg, app.label,
                         "打开 " + app.opens + " 次 · 鼓励 " + app.prompts + " 次 · "
-                                + StatsMath_26_10_25.duration(app.foregroundMs));
+                                + StatsMath_26_10_25.duration(app.foregroundMs)
+                                + (app.temporaryOpens > 0
+                                ? " · 本次切换 " + app.temporaryOpens + " 次" : ""));
             }
         }
     }

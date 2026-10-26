@@ -41,27 +41,29 @@ public class IntroActivity_26_10_26 extends AppCompatActivity {
         Ui_26_10_25.applyInsets(scroll);
 
         ImageView mascot = new ImageView(this);
-        mascot.setImageResource(R.drawable.mascot_xiaohuan);
+        mascot.setImageResource(R.drawable.mascot_nuonuo_cutout);
         page.addView(mascot, new LinearLayout.LayoutParams(
                 Ui_26_10_25.dp(this, 168), Ui_26_10_25.dp(this, 168)));
         Ui_26_10_25.breathe(mascot);
 
         TextView title = Ui_26_10_25.text(this, "一念间", 32, Ui_26_10_25.INK, true);
+        title.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
         title.setGravity(Gravity.CENTER);
         page.addView(title);
-        TextView slogan = Ui_26_10_25.text(this, "陪你停一下，也陪你做下去。", 17,
+        TextView slogan = Ui_26_10_25.text(this, "这一念，听自己。", 17,
                 Ui_26_10_25.MUTED, false);
         slogan.setGravity(Gravity.CENTER);
         slogan.setPadding(0, Ui_26_10_25.dp(this, 10), 0, Ui_26_10_25.dp(this, 24));
         page.addView(slogan);
 
         LinearLayout card = Ui_26_10_25.card(this);
-        addPoint(card, "先停一下", "打开你选的应用时，先问一句：这次想做什么？");
-        addPoint(card, "选个时长", "3 / 10 / 30 分钟或自定义；到点还在应用里，会再问一次。");
+        addPoint(card, "想一想", "打开选定的应用时，先问一句：这次想做什么？");
+        addPoint(card, "用自己的节奏", "想放松就放松，想学习就学习；到约定时间再看一次。");
+        addPoint(card, "也能得到鼓励", "为想多用的应用留一句话，糯糯会轻轻提醒你。");
         addPoint(card, "只在本机", "不联网，不读屏幕内容，记录只留给自己。");
         page.addView(card);
 
-        TextView mascotLine = Ui_26_10_25.text(this, "小缓在，慢慢来。", 13,
+        TextView mascotLine = Ui_26_10_25.text(this, "糯糯在，按你的节奏来。", 13,
                 Ui_26_10_25.MUTED, false);
         mascotLine.setGravity(Gravity.CENTER);
         mascotLine.setPadding(0, Ui_26_10_25.dp(this, 22), 0, Ui_26_10_25.dp(this, 10));

@@ -127,7 +127,7 @@ public final class Apps_26_10_25 {
 
     public static int encourageInterval(Context context, String pkg) {
         return context.getSharedPreferences(ENCOURAGE_SETTINGS, Context.MODE_PRIVATE)
-                .getInt(pkg + "_interval", 30);
+                .getInt(pkg + "_interval", 20);
     }
 
     public static void setEncourageInterval(Context context, String pkg, int minutes) {
@@ -202,23 +202,27 @@ public final class Apps_26_10_25 {
 
     public static List<String> presetMessages() {
         List<String> list = new ArrayList<>();
-        list.add("慢慢来，今天也在自己的节奏里。");
-        list.add("做一点，就算一点。");
-        list.add("此刻你在做想做的事，很好。");
-        list.add("不用急，先把手边这一段做好。");
-        list.add("能回来就好，继续一点点。");
-        list.add("这一小段时间，是你的。");
-        list.add("累了就歇一会儿，再继续。");
-        list.add("你已经开始了，这就够了。");
-        list.add("把注意力放在眼前这一件事上。");
-        list.add("今天也值得被好好用。");
+        list.add("给自己想做的事，一点时间。");
+        list.add("糯糯悄悄路过，送你一个赞。");
+        list.add("按自己的节奏，糯糯不催。");
+        list.add("你忙你的，糯糯给你打气。");
+        list.add("想继续，就再留一会儿。");
+        list.add("读几页也好，先从这一页开始。");
         return list;
+    }
+
+    public static String openingEncourageMessage(Context context, String pkg) {
+        List<String> custom = customEncourageMessages(context, pkg);
+        if (!custom.isEmpty()) return custom.get(0);
+        String label = label(context, pkg);
+        if (label.contains("读书") || label.contains("阅读")) return "想读的话，就从这一页开始。";
+        return "给自己想做的事，一点时间。";
     }
 
     public static String nextEncourageMessage(Context context, String pkg) {
         List<String> messages = new ArrayList<>();
         if (presetEnabled(context, pkg)) messages.addAll(presetMessages());
-        messages.addAll(customEncourageMessages(context, pkg));
+        else messages.addAll(customEncourageMessages(context, pkg));
         if (messages.isEmpty()) messages.addAll(presetMessages());
         if ("sequential".equals(rotation(context, pkg))) {
             SharedPreferences p = context.getSharedPreferences(ENCOURAGE_SETTINGS, Context.MODE_PRIVATE);
