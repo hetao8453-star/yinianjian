@@ -6,3 +6,7 @@ app/build/
 build/
 *.iml
 .DS_Store
+keystore.properties
+*.jks
+*.keystore
+release.keystore
