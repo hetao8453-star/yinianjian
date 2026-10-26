@@ -1,0 +1,25 @@
+你在接手一个已经在开发中的 Android 项目“一念间”（包名 com.intentpause.app）。不要从第一版重新设计，先同步现状，再只做用户指定的下一件事。
+
+第一步，按顺序读：
+1. CODEX_HANDOFF_26_10_26.md
+2. 需求确认_v5_26_10_26.md
+3. 真机测试清单_v5_26_10_26.md
+
+当前状态：
+- 原生 Java + View，无 Compose；无障碍覆盖层；前台服务；SQLite；不联网。
+- 版本 5.0；公开仓库 https://github.com/hetao8453-star/yinianjian
+- 最新 Release：https://github.com/hetao8453-star/yinianjian/releases/tag/v5.0
+- 已有 v5：受控应用确认/复查、鼓励应用、花园、日周月记录、今日总结、替代入口、暂停照看、B 视觉、隐私修复。
+- 刚修：记录页重复 addView 闪退；上滑回桌面后覆盖层恢复。后者尚未 iQOO 真机验证。
+- 不要加 INTERNET/远程配置/应用内更新，用户已明确暂不做。
+- 不要改包名、应用名、Slogan、图标、B 视觉、release keystore；不要自行发 Release 或改 GitHub Secrets。
+- 不要读窗口内容/通知/剪贴板；不要用未测试结果冒充已验证。
+
+工作方式：
+- 先复现问题，再改代码；改完运行：
+  JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+- 用真机测试清单记录“通过/未测/失败”，不要补写成功。
+- 大改前先说明会动哪些文件；不要顺手重构无关模块。
+- 当前优先：iQOO 真机验证底部上滑、记录页闪退是否消失、鼓励提示、今日总结。
+
+先读完文件，用 3–5 句话复述你理解的产品和当前状态，然后等我给具体任务。
