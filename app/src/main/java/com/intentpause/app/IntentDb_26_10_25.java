@@ -370,6 +370,12 @@ public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
         return count("SELECT COUNT(*) FROM sessions", null);
     }
 
+    public void deleteAppRecords(String pkg) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.delete("events", "pkg=?", new String[]{pkg});
+        db.delete("sessions", "pkg=?", new String[]{pkg});
+    }
+
     public void clearAllRecords() {
         SQLiteDatabase db = getWritableDatabase();
         db.delete("sessions", null, null);

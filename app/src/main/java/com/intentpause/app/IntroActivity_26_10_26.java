@@ -44,6 +44,7 @@ public class IntroActivity_26_10_26 extends AppCompatActivity {
         mascot.setImageResource(R.drawable.mascot_xiaohuan);
         page.addView(mascot, new LinearLayout.LayoutParams(
                 Ui_26_10_25.dp(this, 168), Ui_26_10_25.dp(this, 168)));
+        Ui_26_10_25.breathe(mascot);
 
         TextView title = Ui_26_10_25.text(this, "一念间", 32, Ui_26_10_25.INK, true);
         title.setGravity(Gravity.CENTER);

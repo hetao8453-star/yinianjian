@@ -25,18 +25,20 @@ import androidx.core.view.WindowInsetsControllerCompat;
 
 /** 共享的颜色、字号、间距与常用控件，避免每个页面重复写样式。 */
 public final class Ui_26_10_25 {
-    public static final int PAPER = Color.rgb(247, 246, 242);
-    public static final int CARD = Color.WHITE;
-    public static final int INK = Color.rgb(37, 44, 40);
-    public static final int MUTED = Color.rgb(110, 117, 111);
-    public static final int GREEN = Color.rgb(54, 94, 75);
-    public static final int GREEN_SOFT = Color.rgb(231, 239, 233);
-    public static final int GREEN_TINT = Color.rgb(241, 246, 242);
-    public static final int LINE = Color.rgb(236, 234, 227);
-    public static final int WARN = Color.rgb(150, 103, 72);
-    public static final int CHART_GREEN = Color.rgb(111, 156, 132);
-    public static final int CHART_SAGE = Color.rgb(169, 195, 180);
-    public static final int CHART_SAND = Color.rgb(217, 199, 167);
+    public static final int PAPER = Color.rgb(243, 241, 231);
+    public static final int CARD = Color.rgb(251, 249, 241);
+    public static final int INK = Color.rgb(42, 49, 42);
+    public static final int MUTED = Color.rgb(98, 108, 98);
+    public static final int GREEN = Color.rgb(79, 122, 94);
+    public static final int GREEN_SOFT = Color.rgb(230, 237, 227);
+    public static final int GREEN_TINT = Color.rgb(238, 243, 234);
+    public static final int LINE = Color.rgb(222, 223, 213);
+    public static final int WARN = Color.rgb(168, 121, 66);
+    public static final int CHART_GREEN = Color.rgb(79, 122, 94);
+    public static final int SAGE = Color.rgb(169, 195, 180);
+    public static final int SAND = Color.rgb(220, 201, 168);
+    public static final int CHART_SAGE = SAGE;
+    public static final int CHART_SAND = SAND;
     public static final int CHART_CLAY = Color.rgb(216, 180, 166);
     public static final int CHART_MIST = Color.rgb(183, 200, 214);
 
@@ -192,6 +194,32 @@ public final class Ui_26_10_25 {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(c, sizeDp), dp(c, sizeDp));
         b.setLayoutParams(lp);
         return b;
+    }
+
+    public static boolean reduceMotion(Context context) {
+        try {
+            return android.provider.Settings.Global.getFloat(context.getContentResolver(),
+                    android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f;
+        } catch (RuntimeException ignored) {
+            return false;
+        }
+    }
+
+    /** 小缓的轻微呼吸，幅度很小；系统减弱动画时不启动。 */
+    public static void breathe(View view) {
+        if (view == null || reduceMotion(view.getContext())) return;
+        android.animation.ObjectAnimator scaleX = android.animation.ObjectAnimator.ofFloat(
+                view, "scaleX", 1f, 1.025f);
+        android.animation.ObjectAnimator scaleY = android.animation.ObjectAnimator.ofFloat(
+                view, "scaleY", 1f, 1.025f);
+        for (android.animation.ObjectAnimator animator : new android.animation.ObjectAnimator[]{scaleX, scaleY}) {
+            animator.setDuration(2400);
+            animator.setStartDelay(800);
+            animator.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+            animator.setRepeatMode(android.animation.ValueAnimator.REVERSE);
+            animator.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+            animator.start();
+        }
     }
 
     public static void toast(Context c, CharSequence s) {

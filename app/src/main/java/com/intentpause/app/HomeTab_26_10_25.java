@@ -48,6 +48,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         mascot.setImageResource(R.drawable.mascot_xiaohuan);
         titleRow.addView(mascot, new LinearLayout.LayoutParams(
                 Ui_26_10_25.dp(activity, 44), Ui_26_10_25.dp(activity, 44)));
+        Ui_26_10_25.breathe(mascot);
         LinearLayout titleBox = Ui_26_10_25.vertical(activity);
         titleBox.setPadding(Ui_26_10_25.dp(activity, 10), 0, 0, 0);
         titleBox.addView(Ui_26_10_25.text(activity, "一念间", 28, Ui_26_10_25.INK, true));

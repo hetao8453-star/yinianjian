@@ -138,11 +138,17 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         if (name == null) return;
         String pkg = name.toString();
         if (pkg.equals(getPackageName())) return;
-        if (isIgnoredWindow(pkg, event)) return;
+        if (isIgnoredWindow(pkg)) return;
         long now = System.currentTimeMillis();
 
         if (pkg.equals(foregroundPackage)) {
             sameForeground(pkg, now);
+            return;
+        }
+        if (Apps_26_10_25.sensitive(this, pkg)) {
+            // 敏感应用：当作离开目标应用，但不把包名写入快照/记录。
+            if (activePackage != null && !activePackage.equals(pkg)) onTargetLeft(now);
+            foregroundPackage = null;
             return;
         }
         foregroundPackage = pkg;
@@ -546,7 +552,9 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
         s.allowedWall = allowedWall;
         s.startedWall = startedWall;
         s.foregroundMs = foregroundMs;
-        s.foreground = foregroundPackage;
+        // 只记录目标应用；其他应用（包括敏感应用）的包名不写入快照。
+        s.foreground = (activePackage != null && activePackage.equals(foregroundPackage))
+                ? foregroundPackage : null;
         s.page = page;
         SessionState_26_10_25.save(this, s);
     }
@@ -611,18 +619,12 @@ public class IntentAccessibilityService_26_10_25 extends AccessibilityService
     }
 
     /** 输入法、系统面板与权限弹窗不是“切换到了别的应用”，不应结束或重置会话。 */
-    private boolean isIgnoredWindow(String pkg, AccessibilityEvent event) {
+    private boolean isIgnoredWindow(String pkg) {
         if (pkg.equals("com.android.systemui")) return true;
         if (pkg.startsWith("com.android.permissioncontroller")) return true;
         if (pkg.startsWith("com.google.android.permissioncontroller")) return true;
         if (imePackages.contains(pkg)) return true;
-        if (pkg.contains("inputmethod") || pkg.contains("input_method")) return true;
-        CharSequence cls = event.getClassName();
-        if (cls != null) {
-            String name = cls.toString();
-            if (name.contains("SoftInputWindow") || name.contains("InputMethod")) return true;
-        }
-        return false;
+        return pkg.contains("inputmethod") || pkg.contains("input_method");
     }
 
     private boolean selected(String pkg) {

@@ -14,6 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
@@ -197,12 +198,23 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
         check.setContentDescription((sensitiveMode ? "标记" : "监测") + label);
         check.setOnCheckedChangeListener((buttonView, isChecked) -> {
             setSelected(pkg, isChecked);
+            if (sensitiveMode && isChecked) askDeleteHistory(pkg, label);
             updateCount();
         });
         row.addView(check, new LinearLayout.LayoutParams(
                 Ui_26_10_25.dp(this, 48), Ui_26_10_25.dp(this, 48)));
         row.setOnClickListener(v -> check.setChecked(!check.isChecked()));
         return row;
+    }
+
+    private void askDeleteHistory(String pkg, String label) {
+        new AlertDialog.Builder(this)
+                .setTitle("删除“" + label + "”的历史记录？")
+                .setMessage("标记为敏感应用后，之后打开它不会弹确认页，也不会记录。此前的记录要一起删除吗？")
+                .setNegativeButton("保留历史", null)
+                .setPositiveButton("删除历史", (dialog, which) ->
+                        IntentDb_26_10_25.get(this).deleteAppRecords(pkg))
+                .show();
     }
 
     private boolean isSelected(String pkg) {

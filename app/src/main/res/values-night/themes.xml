@@ -3,11 +3,11 @@
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-        <item name="android:windowBackground">#F7F6F2</item>
-        <item name="colorPrimary">#365E4B</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="colorSurface">#FFFFFF</item>
-        <item name="colorOnSurface">#252C28</item>
+        <item name="android:windowBackground">#F3F1E7</item>
+        <item name="colorPrimary">#4F7A5E</item>
+        <item name="colorOnPrimary">#FBF9F1</item>
+        <item name="colorSurface">#FBF9F1</item>
+        <item name="colorOnSurface">#2A312A</item>
     </style>
 
     <style name="Theme.一念间" parent="Base.Theme.一念间" />

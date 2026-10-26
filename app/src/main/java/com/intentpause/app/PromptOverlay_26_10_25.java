@@ -384,7 +384,8 @@ public final class PromptOverlay_26_10_25 {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         content.setAlpha(0f);
         content.setTranslationY(Ui_26_10_25.dp(context, 10));
-        content.animate().alpha(1f).translationY(0f).setDuration(150).start();
+        content.animate().alpha(1f).translationY(0f).setDuration(
+                Ui_26_10_25.reduceMotion(context) ? 0 : 150).start();
         scroll.scrollTo(0, 0);
     }
 
