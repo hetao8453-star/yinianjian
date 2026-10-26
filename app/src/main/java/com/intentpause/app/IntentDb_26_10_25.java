@@ -378,7 +378,7 @@ public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
     }
 
     public int totalSessionCount() {
-        return count("SELECT COUNT(*) FROM sessions", null);
+        return count("SELECT COUNT(*) FROM sessions");
     }
 
     public void deleteAppRecords(String pkg) {
