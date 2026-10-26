@@ -12,13 +12,13 @@
 
 **https://github.com/hetao8453-star/yinianjian/releases/latest/download/yinianjian-latest.apk**
 
-指定版本 v6.0：
+指定版本 v7.0：
 
-https://github.com/hetao8453-star/yinianjian/releases/tag/v6.0
+https://github.com/hetao8453-star/yinianjian/releases/tag/v7.0
 
 ## 安装与更新
 
-- v6.0 与 v5.0 正式包使用同一签名和包名，可以直接覆盖安装；从 debug 包换正式包需要先卸载，数据会清空。
+- v7.0 与 v6.0、v5.0 正式包使用同一签名和包名，可以直接覆盖安装；从 debug 包换正式包需要先卸载，数据会清空。
 - 这是侧载 APK，不是应用商店版本；安装时 Android 会提示“未知来源”。
 - 项目不联网，不会在应用内检查更新；新版本请回到本页或 Releases 下载。
 

@@ -482,6 +482,50 @@ public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
                 + "AND (allowed_wall>0 OR status='declined')", begin, end);
     }
 
+    /** 花园里的每朵小花都指向一条真实会话；只取最近的少量记录供触摸。 */
+    public List<GardenMoment> gardenMoments(long begin, long end, int limit) {
+        List<GardenMoment> result = new ArrayList<>();
+        String count = String.valueOf(Math.max(1, limit));
+        try (Cursor c = getReadableDatabase().rawQuery(
+                "SELECT id, pkg, IFNULL(label,''), IFNULL(purpose,''), IFNULL(detail,''), "
+                        + "started_wall, IFNULL(status,''), foreground_ms "
+                        + "FROM sessions WHERE started_wall>=? AND started_wall<? "
+                        + "AND (allowed_wall>0 OR status='declined') "
+                        + "ORDER BY started_wall DESC LIMIT " + count, toStrings(begin, end))) {
+            while (c.moveToNext()) {
+                GardenMoment m = new GardenMoment();
+                m.id = c.getLong(0);
+                m.pkg = c.getString(1);
+                m.label = c.getString(2);
+                m.purpose = c.getString(3);
+                m.detail = c.getString(4);
+                m.wall = c.getLong(5);
+                m.status = c.getString(6);
+                m.foregroundMs = c.getLong(7);
+                m.encouraged = false;
+                result.add(m);
+            }
+        }
+        try (Cursor c = getReadableDatabase().rawQuery(
+                "SELECT id, pkg, IFNULL(label,''), started_wall, foreground_ms, temporary "
+                        + "FROM encourage_sessions WHERE started_wall>=? AND started_wall<? "
+                        + "ORDER BY started_wall DESC LIMIT " + count, toStrings(begin, end))) {
+            while (c.moveToNext()) {
+                GardenMoment m = new GardenMoment();
+                m.id = c.getLong(0);
+                m.pkg = c.getString(1);
+                m.label = c.getString(2);
+                m.wall = c.getLong(3);
+                m.foregroundMs = c.getLong(4);
+                m.temporary = c.getInt(5) == 1;
+                m.encouraged = true;
+                result.add(m);
+            }
+        }
+        result.sort((a, b) -> Long.compare(b.wall, a.wall));
+        return result.size() > limit ? new ArrayList<>(result.subList(0, limit)) : result;
+    }
+
     public int declinedCount(long begin, long end) {
         return count("SELECT COUNT(*) FROM sessions WHERE status='declined' AND started_wall>=? AND started_wall<?", begin, end);
     }
@@ -597,6 +641,19 @@ public final class IntentDb_26_10_25 extends SQLiteOpenHelper {
         public int leaves;
         public long savedEstMs;
         public long foregroundMs;
+    }
+
+    public static class GardenMoment {
+        public long id;
+        public String pkg;
+        public String label;
+        public String purpose;
+        public String detail;
+        public String status;
+        public long wall;
+        public long foregroundMs;
+        public boolean encouraged;
+        public boolean temporary;
     }
 
     public static class DayApp {

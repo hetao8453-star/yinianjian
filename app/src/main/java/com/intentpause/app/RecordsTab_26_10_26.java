@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/** v5 记录页：小缓花园、日/周/月、主动停柱图、6 个数字、分应用、感悟。 */
+/** 记录页：可触摸的事件花园、日/周/月、柱图、分应用与感悟。 */
 public class RecordsTab_26_10_26 extends ScrollView implements Refreshable_26_10_25 {
     private final MainActivity activity;
     private GardenView_26_10_26 garden;
@@ -37,6 +37,9 @@ public class RecordsTab_26_10_26 extends ScrollView implements Refreshable_26_10
     private EditText noteInput;
     private final TextView noteLabel;
     private TextView gardenToggle;
+    private View gardenLegend;
+    private TextView gardenRecent;
+    private List<IntentDb_26_10_25.GardenMoment> recentMoments;
     private final TextView[] tabs = new TextView[3];
     private final Handler noteHandler = new Handler(Looper.getMainLooper());
 
@@ -66,9 +69,11 @@ public class RecordsTab_26_10_26 extends ScrollView implements Refreshable_26_10
 
         // 花园
         LinearLayout gardenCard = Ui_26_10_25.card(activity);
+        gardenCard.setBackground(Ui_26_10_25.roundStroke(activity,
+                0xFFFCFAF3, Ui_26_10_25.LINE, 24));
         LinearLayout gardenHead = Ui_26_10_25.horizontal(activity);
         gardenHead.setGravity(Gravity.CENTER_VERTICAL);
-        gardenHead.addView(Ui_26_10_25.text(activity, "糯糯的花园", 16,
+        gardenHead.addView(Ui_26_10_25.text(activity, "糯糯的花园", 19,
                 Ui_26_10_25.INK, true), new LinearLayout.LayoutParams(0,
                 LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         gardenCount = Ui_26_10_25.text(activity, "", 12, Ui_26_10_25.MUTED, false);
@@ -78,16 +83,35 @@ public class RecordsTab_26_10_26 extends ScrollView implements Refreshable_26_10
             garden.setVisibility(gardenVisible ? View.VISIBLE : View.GONE);
             gardenCount.setVisibility(gardenVisible ? View.VISIBLE : View.GONE);
             careLine.setVisibility(gardenVisible ? View.VISIBLE : View.GONE);
+            gardenLegend.setVisibility(gardenVisible ? View.VISIBLE : View.GONE);
+            gardenRecent.setVisibility(gardenVisible ? View.VISIBLE : View.GONE);
             gardenToggle.setText(gardenVisible ? "收起" : "展开");
         });
         gardenToggle.setPadding(Ui_26_10_25.dp(activity, 12), 0, 0, 0);
         gardenHead.addView(gardenToggle);
         gardenCard.addView(gardenHead);
+        Ui_26_10_25.add(gardenCard, Ui_26_10_25.text(activity,
+                "每次选择，都在这里留下一点痕迹。", 13,
+                Ui_26_10_25.MUTED, false), 5);
         garden = new GardenView_26_10_26(activity);
+        garden.setListener(this::showGardenMoment);
         LinearLayout.LayoutParams gp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, Ui_26_10_25.dp(activity, 150));
-        gp.topMargin = Ui_26_10_25.dp(activity, 8);
+                LinearLayout.LayoutParams.MATCH_PARENT, Ui_26_10_25.dp(activity, 210));
+        gp.topMargin = Ui_26_10_25.dp(activity, 14);
         gardenCard.addView(garden, gp);
+        LinearLayout legendRow = Ui_26_10_25.horizontal(activity);
+        legendRow.addView(legendPill("✿ 四瓣花 · 主动选择", 0xFFE9EEE3),
+                new LinearLayout.LayoutParams(0, Ui_26_10_25.dp(activity, 44), 1f));
+        LinearLayout.LayoutParams budLp = new LinearLayout.LayoutParams(0,
+                Ui_26_10_25.dp(activity, 44), 1f);
+        budLp.leftMargin = Ui_26_10_25.dp(activity, 8);
+        legendRow.addView(legendPill("✿ 五瓣花 · 鼓励打开", 0xFFF4E9E0), budLp);
+        gardenLegend = legendRow;
+        Ui_26_10_25.add(gardenCard, gardenLegend, 12);
+        gardenRecent = Ui_26_10_25.action(activity, "查看花园里的记录",
+                this::showGardenList);
+        gardenRecent.setMinHeight(Ui_26_10_25.dp(activity, 48));
+        Ui_26_10_25.add(gardenCard, gardenRecent, 4);
         careLine = Ui_26_10_25.hint(activity, "");
         careLine.setPadding(0, Ui_26_10_25.dp(activity, 8), 0, 0);
         gardenCard.addView(careLine);
@@ -207,6 +231,14 @@ public class RecordsTab_26_10_26 extends ScrollView implements Refreshable_26_10
         refresh();
     }
 
+    private TextView legendPill(String label, int background) {
+        TextView pill = Ui_26_10_25.text(activity, label, 12,
+                Ui_26_10_25.GREEN, true);
+        pill.setGravity(Gravity.CENTER);
+        pill.setBackground(Ui_26_10_25.round(activity, background, 12));
+        return pill;
+    }
+
     private void shift(int direction) {
         Calendar next = (Calendar) anchor.clone();
         if (granularity == 0) next.add(Calendar.DAY_OF_MONTH, direction);
@@ -263,10 +295,11 @@ public class RecordsTab_26_10_26 extends ScrollView implements Refreshable_26_10
         stats[5].setText(StatsMath_26_10_25.duration(encourage.ms));
 
         int stops = db.controlledActiveStops(begin, end);
-        int encourageOpens = encourage.opens;
-        int totalLeaves = stops + encourageOpens;
-        garden.setData(stops, encourageOpens, totalLeaves, true);
-        gardenCount.setText(periodWord() + " · " + totalLeaves + " 片叶子");
+        int totalLeaves = stops + encourage.opens;
+        recentMoments = db.gardenMoments(begin, end, GardenView_26_10_26.MAX_VISIBLE);
+        garden.setMoments(recentMoments, true);
+        gardenCount.setText(periodWord() + " · 共 " + totalLeaves + " 次");
+        gardenRecent.setText("查看最近 " + recentMoments.size() + " 次选择与打开");
         int careDays = db.careDayCount(begin, end);
         careLine.setText(periodWord() + "有 " + careDays + " 天主动停过/用过鼓励应用");
         barTotal.setText("共 " + stops + " 次");
@@ -274,6 +307,66 @@ public class RecordsTab_26_10_26 extends ScrollView implements Refreshable_26_10
         fillBars(db, begin, end, stops);
         renderDetails(db, begin, end);
         renderNote(begin);
+    }
+
+    private String gardenMomentAction(IntentDb_26_10_25.GardenMoment moment) {
+        if (moment.encouraged) return moment.temporary
+                ? "这次改为鼓励使用" : "打开了一次鼓励应用";
+        if ("declined".equals(moment.status)) return "这次选择先不打开";
+        String purpose = moment.purpose == null ? "" : moment.purpose;
+        return purpose.isEmpty() ? "这次选择打开应用" : "这次选择：" + purpose;
+    }
+
+    private void showGardenMoment(IntentDb_26_10_25.GardenMoment moment) {
+        LinearLayout body = Ui_26_10_25.vertical(activity);
+        String label = moment.label == null || moment.label.isEmpty()
+                ? Apps_26_10_25.label(activity, moment.pkg) : moment.label;
+        body.addView(Ui_26_10_25.hint(activity,
+                StatsMath_26_10_25.monthDay(moment.wall) + " "
+                        + StatsMath_26_10_25.clock(moment.wall) + " · " + label));
+        Ui_26_10_25.add(body, Ui_26_10_25.text(activity,
+                gardenMomentAction(moment), 18, Ui_26_10_25.INK, true), 16);
+        if (moment.detail != null && !moment.detail.trim().isEmpty()) {
+            Ui_26_10_25.add(body, Ui_26_10_25.text(activity,
+                    "当时写下：" + moment.detail.trim(), 15,
+                    Ui_26_10_25.MUTED, false), 10);
+        }
+        if (moment.foregroundMs > 0) {
+            Ui_26_10_25.add(body, Ui_26_10_25.hint(activity,
+                    "已记录前台时间 " + StatsMath_26_10_25.duration(moment.foregroundMs)), 14);
+        }
+        GentleSheet_26_10_26.show(activity,
+                moment.encouraged ? "一朵五瓣花的来处" : "一朵四瓣花的来处",
+                body, null, null);
+    }
+
+    private void showGardenList() {
+        LinearLayout body = Ui_26_10_25.vertical(activity);
+        if (recentMoments == null || recentMoments.isEmpty()) {
+            body.addView(Ui_26_10_25.hint(activity, "这个时段还没有花园记录。"));
+        } else {
+            body.addView(Ui_26_10_25.hint(activity,
+                    "展示最近 " + recentMoments.size() + " 次；点开可看对应的选择。"));
+            android.app.Dialog[] sheet = new android.app.Dialog[1];
+            for (IntentDb_26_10_25.GardenMoment moment : recentMoments) {
+                LinearLayout row = Ui_26_10_25.card(activity);
+                row.addView(Ui_26_10_25.text(activity,
+                        (moment.encouraged ? "五瓣花 · " : "四瓣花 · ")
+                                + gardenMomentAction(moment), 15, Ui_26_10_25.INK, true));
+                Ui_26_10_25.add(row, Ui_26_10_25.hint(activity,
+                        StatsMath_26_10_25.monthDay(moment.wall) + " "
+                                + StatsMath_26_10_25.clock(moment.wall)), 6);
+                row.setOnClickListener(v -> {
+                    sheet[0].dismiss();
+                    showGardenMoment(moment);
+                });
+                Ui_26_10_25.add(body, row, 8);
+            }
+            sheet[0] = GentleSheet_26_10_26.show(activity, "花园里的记录", body,
+                    null, null);
+            return;
+        }
+        GentleSheet_26_10_26.show(activity, "花园里的记录", body, null, null);
     }
 
     private void fillBars(IntentDb_26_10_25 db, long begin, long end, int stops) {

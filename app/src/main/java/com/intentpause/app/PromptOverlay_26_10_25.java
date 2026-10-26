@@ -1,10 +1,13 @@
 package com.intentpause.app;
 
 import android.content.Context;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.os.Build;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
@@ -57,6 +60,9 @@ public final class PromptOverlay_26_10_25 {
     private ScrollView scroll;
     private LinearLayout page;
     private EditText detailInput;
+    private ImageView promptMascot;
+    private View promptContent;
+    private ObjectAnimator mascotBreath;
     private String detail = "";
 
     public PromptOverlay_26_10_25(Context context, Listener listener) {
@@ -75,19 +81,47 @@ public final class PromptOverlay_26_10_25 {
     }
 
     public void showPrompt(String pkg, String label, String savedDetail, int todayOpenCount) {
+        stopMascotBreath();
         detailInput = null;
         detail = savedDetail == null ? "" : savedDetail;
         if (!ensureView()) return;
         LinearLayout content = Ui_26_10_25.vertical(context);
         content.addView(headerWithClose(pkg, label, () -> listener.onDecline()));
+        FrameLayout mascotStage = new FrameLayout(context);
+        GradientDrawable stageBackground = new GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{0xFFE4EFE3, 0xFFF8EFE4});
+        stageBackground.setCornerRadius(Ui_26_10_25.dp(context, 22));
+        mascotStage.setBackground(stageBackground);
+        LinearLayout.LayoutParams stageLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, Ui_26_10_25.dp(context, 108));
+        stageLp.topMargin = Ui_26_10_25.dp(context, 16);
+        content.addView(mascotStage, stageLp);
         ImageView mascot = new ImageView(context);
         mascot.setImageResource(R.drawable.mascot_nuonuo_cutout);
-        LinearLayout.LayoutParams mascotLp = new LinearLayout.LayoutParams(
-                Ui_26_10_25.dp(context, 46), Ui_26_10_25.dp(context, 46));
-        mascotLp.topMargin = Ui_26_10_25.dp(context, 8);
-        content.addView(mascot, mascotLp);
-        mascot.post(() -> Ui_26_10_25.nodOnce(mascot));
-        Ui_26_10_25.add(content, Ui_26_10_25.title(context, "这次打开，想做什么？"), 22);
+        FrameLayout.LayoutParams mascotLp = new FrameLayout.LayoutParams(
+                Ui_26_10_25.dp(context, 82), Ui_26_10_25.dp(context, 82));
+        mascotLp.gravity = Gravity.START | Gravity.CENTER_VERTICAL;
+        mascotLp.leftMargin = Ui_26_10_25.dp(context, 15);
+        mascotStage.addView(mascot, mascotLp);
+        TextView stageLine = Ui_26_10_25.text(context, "糯糯在这里陪你停一下", 14,
+                Ui_26_10_25.GREEN, true);
+        FrameLayout.LayoutParams lineLp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.END | Gravity.CENTER_VERTICAL);
+        lineLp.rightMargin = Ui_26_10_25.dp(context, 14);
+        mascotStage.addView(stageLine, lineLp);
+        promptMascot = mascot;
+        promptContent = content;
+        NuoNuoGesture_26_10_26.attach(mascot, new NuoNuoGesture_26_10_26.DragListener() {
+            @Override public void onDragStart() { pauseMascotBreath(); }
+            @Override public void onDragEnd() {
+                mascot.postDelayed(() -> {
+                    if (promptMascot == mascot) startMascotBreath(mascot);
+                }, 450);
+            }
+        });
+        Ui_26_10_25.add(content, Ui_26_10_25.title(context, "这次打开，想做什么？"), 18);
         Ui_26_10_25.add(content, Ui_26_10_25.subtitle(context, "选一个目的，再选时长。"), 10);
         if (todayOpenCount > 0) {
             TextView count = Ui_26_10_25.text(context,
@@ -330,6 +364,7 @@ public final class PromptOverlay_26_10_25 {
     }
 
     public void hide() {
+        stopMascotBreath();
         if (root == null) return;
         try {
             windows.removeView(root);
@@ -399,6 +434,7 @@ public final class PromptOverlay_26_10_25 {
 
     private void showPage(View content) {
         if (page == null) return;
+        if (promptMascot != null && promptContent != content) stopMascotBreath();
         page.removeAllViews();
         page.addView(content, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -407,6 +443,44 @@ public final class PromptOverlay_26_10_25 {
         content.animate().alpha(1f).translationY(0f).setDuration(
                 Ui_26_10_25.reduceMotion(context) ? 0 : 150).start();
         scroll.scrollTo(0, 0);
+        if (promptMascot != null) {
+            ImageView mascot = promptMascot;
+            mascot.post(() -> {
+                if (promptMascot != mascot || root == null) return;
+                Ui_26_10_25.nodOnce(mascot);
+                startMascotBreath(mascot);
+            });
+        }
+    }
+
+    private void startMascotBreath(ImageView mascot) {
+        pauseMascotBreath();
+        if (Ui_26_10_25.reduceMotion(context)) return;
+        mascotBreath = ObjectAnimator.ofFloat(mascot, View.SCALE_Y, 1f, 1.045f);
+        mascotBreath.setDuration(2600);
+        mascotBreath.setStartDelay(420);
+        mascotBreath.setRepeatCount(ValueAnimator.INFINITE);
+        mascotBreath.setRepeatMode(ValueAnimator.REVERSE);
+        mascotBreath.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+        mascotBreath.start();
+    }
+
+    private void pauseMascotBreath() {
+        if (mascotBreath != null) {
+            mascotBreath.cancel();
+            mascotBreath = null;
+        }
+    }
+
+    private void stopMascotBreath() {
+        pauseMascotBreath();
+        if (promptMascot != null) {
+            promptMascot.animate().cancel();
+            promptMascot.setRotation(0f);
+            promptMascot.setScaleY(1f);
+            promptMascot = null;
+        }
+        promptContent = null;
     }
 
     private void scrollIntoView(View target) {

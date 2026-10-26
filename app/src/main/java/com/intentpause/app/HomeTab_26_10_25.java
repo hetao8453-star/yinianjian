@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.text.InputType;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -30,7 +31,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
     private final View statusDot;
     private final TextView statusTitle;
     private final TextView statusLine;
-    private final TextView todayLine;
+    private final TextView[] todayMetrics = new TextView[3];
     private final Button statusButton;
     private boolean expanded;
     private boolean encourageExpanded;
@@ -52,7 +53,8 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         ImageView mascot = new ImageView(activity);
         mascot.setImageResource(R.drawable.mascot_nuonuo_cutout);
         titleRow.addView(mascot, new LinearLayout.LayoutParams(
-                Ui_26_10_25.dp(activity, 44), Ui_26_10_25.dp(activity, 44)));
+                Ui_26_10_25.dp(activity, 54), Ui_26_10_25.dp(activity, 54)));
+        NuoNuoGesture_26_10_26.attach(mascot);
         Ui_26_10_25.breathe(mascot);
         LinearLayout titleBox = Ui_26_10_25.vertical(activity);
         titleBox.setPadding(Ui_26_10_25.dp(activity, 10), 0, 0, 0);
@@ -64,7 +66,16 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         Ui_26_10_25.add(page, titleRow, 0);
 
         LinearLayout statusCard = Ui_26_10_25.card(activity);
+        GradientDrawable statusBackground = new GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                new int[]{0xFFE4EEE3, 0xFFF8F3E8});
+        statusBackground.setCornerRadius(Ui_26_10_25.dp(activity, 24));
+        statusCard.setBackground(statusBackground);
+        TextView statusEyebrow = Ui_26_10_25.text(activity,
+                "TODAY  /  今天", 11, Ui_26_10_25.GREEN, true);
+        statusCard.addView(statusEyebrow);
         LinearLayout statusTop = Ui_26_10_25.horizontal(activity);
+        statusTop.setPadding(0, Ui_26_10_25.dp(activity, 13), 0, 0);
         statusDot = new View(activity);
         statusDot.setBackground(Ui_26_10_25.round(activity, Ui_26_10_25.WARN, 999));
         statusTop.addView(statusDot, new LinearLayout.LayoutParams(
@@ -78,9 +89,24 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         statusLine.setPadding(0, Ui_26_10_25.dp(activity, 8), 0, 0);
         statusCard.addView(statusLine);
 
-        todayLine = Ui_26_10_25.text(activity, "", 13, Ui_26_10_25.MUTED, false);
-        todayLine.setPadding(0, Ui_26_10_25.dp(activity, 10), 0, 0);
-        statusCard.addView(todayLine);
+        LinearLayout metrics = Ui_26_10_25.horizontal(activity);
+        String[] metricLabels = {"打开", "提醒", "前台分钟"};
+        for (int i = 0; i < metricLabels.length; i++) {
+            LinearLayout item = Ui_26_10_25.vertical(activity);
+            item.setPadding(Ui_26_10_25.dp(activity, 11), Ui_26_10_25.dp(activity, 9),
+                    Ui_26_10_25.dp(activity, 4), Ui_26_10_25.dp(activity, 9));
+            item.setBackground(Ui_26_10_25.round(activity, 0xAEFFFFFF, 14));
+            todayMetrics[i] = Ui_26_10_25.text(activity, "0", 22,
+                    Ui_26_10_25.INK, true);
+            item.addView(todayMetrics[i]);
+            item.addView(Ui_26_10_25.text(activity, metricLabels[i], 11,
+                    Ui_26_10_25.MUTED, false));
+            LinearLayout.LayoutParams itemLp = new LinearLayout.LayoutParams(0,
+                    Ui_26_10_25.dp(activity, 67), 1f);
+            if (i > 0) itemLp.leftMargin = Ui_26_10_25.dp(activity, 8);
+            metrics.addView(item, itemLp);
+        }
+        Ui_26_10_25.add(statusCard, metrics, 15);
 
         statusButton = Ui_26_10_25.button(activity, "去开启", true);
         LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(
@@ -133,22 +159,53 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         Ui_26_10_25.add(page, tip, 26);
 
         LinearLayout notes = Ui_26_10_25.card(activity);
-        notes.addView(Ui_26_10_25.text(activity, "糯糯的小纸条", 16, Ui_26_10_25.INK, true));
+        notes.setBackground(Ui_26_10_25.roundStroke(activity,
+                0xFFFFFAF3, Ui_26_10_25.LINE, 24));
+        LinearLayout notesHeader = Ui_26_10_25.horizontal(activity);
+        notesHeader.setGravity(Gravity.CENTER_VERTICAL);
+        notesHeader.addView(Ui_26_10_25.text(activity, "糯糯的小纸条", 19,
+                Ui_26_10_25.INK, true), new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        TextView noteMark = Ui_26_10_25.text(activity, "想看时再打开", 11,
+                Ui_26_10_25.GREEN, true);
+        noteMark.setPadding(Ui_26_10_25.dp(activity, 9), Ui_26_10_25.dp(activity, 6),
+                Ui_26_10_25.dp(activity, 9), Ui_26_10_25.dp(activity, 6));
+        noteMark.setBackground(Ui_26_10_25.round(activity, 0xFFE7EEE4, 99));
+        notesHeader.addView(noteMark);
+        notes.addView(notesHeader);
         Ui_26_10_25.add(notes, Ui_26_10_25.hint(activity,
-                "想看时再打开，不会在使用中弹出长文。"), 8);
-        TextView readNote = Ui_26_10_25.action(activity, "今天读到这里", () ->
-                NuoNuoNotes_26_10_26.show(activity, 0));
-        TextView startNote = Ui_26_10_25.action(activity, "先从一点开始", () ->
-                NuoNuoNotes_26_10_26.show(activity, 1));
-        TextView restNote = Ui_26_10_25.action(activity, "就是想放松一下", () ->
-                NuoNuoNotes_26_10_26.show(activity, 2));
-        for (TextView note : new TextView[]{readNote, startNote, restNote}) {
-            note.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
-            Ui_26_10_25.add(notes, note, 4);
-        }
+                "三张短文，挑一张此刻想读的。"), 8);
+        LinearLayout notePair = Ui_26_10_25.horizontal(activity);
+        notePair.addView(noteCard("01  今天读到这里", 0xFFEAF0E4, 0),
+                new LinearLayout.LayoutParams(0, Ui_26_10_25.dp(activity, 74), 1f));
+        LinearLayout.LayoutParams secondNote = new LinearLayout.LayoutParams(0,
+                Ui_26_10_25.dp(activity, 74), 1f);
+        secondNote.leftMargin = Ui_26_10_25.dp(activity, 10);
+        notePair.addView(noteCard("02  先从一点开始", 0xFFF5E8DD, 1), secondNote);
+        Ui_26_10_25.add(notes, notePair, 16);
+        Ui_26_10_25.add(notes,
+                noteCard("03  就是想放松一下", 0xFFF0EAE8, 2), 10);
+        TextView ownNotes = Ui_26_10_25.action(activity, "我的纸条 · 查看或写一张",
+                () -> NuoNuoNotes_26_10_26.showMine(activity));
+        ownNotes.setGravity(Gravity.CENTER_VERTICAL);
+        ownNotes.setMinHeight(Ui_26_10_25.dp(activity, 52));
+        ownNotes.setBackground(Ui_26_10_25.ripple(activity,
+                Ui_26_10_25.GREEN_SOFT, 14));
+        Ui_26_10_25.add(notes, ownNotes, 12);
         Ui_26_10_25.add(page, notes, 12);
 
         refresh();
+    }
+
+    private TextView noteCard(String label, int background, int index) {
+        TextView view = Ui_26_10_25.text(activity, label, 14, Ui_26_10_25.INK, true);
+        view.setGravity(Gravity.CENTER_VERTICAL);
+        view.setPadding(Ui_26_10_25.dp(activity, 12), 0,
+                Ui_26_10_25.dp(activity, 8), 0);
+        view.setMinHeight(Ui_26_10_25.dp(activity, 72));
+        view.setBackground(Ui_26_10_25.ripple(activity, background, 16));
+        view.setOnClickListener(v -> NuoNuoNotes_26_10_26.show(activity, index));
+        return view;
     }
 
     @Override
@@ -184,8 +241,9 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         long begin = StatsMath_26_10_25.startOfDay(System.currentTimeMillis());
         long end = StatsMath_26_10_25.addDays(begin, 1);
         IntentDb_26_10_25.DayStats stats = db.dayStats(begin, end);
-        todayLine.setText("今天：打开 " + stats.opens + " 次 · 提醒 " + stats.reminders
-                + " 次 · 在应用内 " + StatsMath_26_10_25.duration(stats.foregroundMs));
+        todayMetrics[0].setText(String.valueOf(stats.opens));
+        todayMetrics[1].setText(String.valueOf(stats.reminders));
+        todayMetrics[2].setText(String.valueOf(stats.foregroundMs / 60000));
 
         renderApps();
         renderEncourageApps();
@@ -260,42 +318,32 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
     }
 
     private void showEncourageDialog(String pkg) {
-        ScrollView scroll = new ScrollView(activity);
         LinearLayout box = Ui_26_10_25.vertical(activity);
-        box.setPadding(Ui_26_10_25.dp(activity, 20), Ui_26_10_25.dp(activity, 8),
-                Ui_26_10_25.dp(activity, 20), Ui_26_10_25.dp(activity, 8));
-        scroll.addView(box);
-
-        CheckBox onOpen = new CheckBox(activity);
-        onOpen.setText("打开时，给一句鼓励");
-        onOpen.setTextColor(Ui_26_10_25.INK);
-        onOpen.setChecked(Apps_26_10_25.encourageOnOpen(activity, pkg));
-        box.addView(onOpen);
-
-        CheckBox during = new CheckBox(activity);
-        during.setText("使用中，隔一段时间轻提醒");
-        during.setTextColor(Ui_26_10_25.INK);
-        during.setChecked(Apps_26_10_25.encourageDuring(activity, pkg));
-        box.addView(during);
-
-        EditText interval = new EditText(activity);
+        box.addView(Ui_26_10_25.hint(activity,
+                "只给一句轻提示，不挡住正在做的事。每个应用可单独设置。"));
+        android.widget.Switch onOpen = encourageSwitch("打开时给一句鼓励",
+                Apps_26_10_25.encourageOnOpen(activity, pkg));
+        Ui_26_10_25.add(box, onOpen, 16);
+        android.widget.Switch during = encourageSwitch("持续使用时轻提醒",
+                Apps_26_10_25.encourageDuring(activity, pkg));
+        Ui_26_10_25.add(box, during, 8);
+        box.addView(GentleSheet_26_10_26.label(activity,
+                "累计使用多久提示一次 · 10–120 分钟"));
+        EditText interval = GentleSheet_26_10_26.input(activity,
+                String.valueOf(Apps_26_10_25.encourageInterval(activity, pkg)),
+                "例如 20", false);
         interval.setInputType(InputType.TYPE_CLASS_NUMBER);
-        interval.setHint("累计前台分钟（10–120）");
-        interval.setText(String.valueOf(Apps_26_10_25.encourageInterval(activity, pkg)));
-        interval.setTextColor(Ui_26_10_25.INK);
-        interval.setHintTextColor(Ui_26_10_25.MUTED);
         box.addView(interval);
+        Ui_26_10_25.add(box, Ui_26_10_25.hint(activity,
+                "只累计亮屏且应用在前台的时间，切走或锁屏时暂停。"), 8);
 
-        CheckBox preset = new CheckBox(activity);
-        preset.setText("使用中轮换内置文案");
-        preset.setTextColor(Ui_26_10_25.INK);
-        preset.setChecked(Apps_26_10_25.presetEnabled(activity, pkg));
+        box.addView(GentleSheet_26_10_26.label(activity, "提示内容"));
+        android.widget.Switch preset = encourageSwitch("使用中轮换糯糯的话",
+                Apps_26_10_25.presetEnabled(activity, pkg));
         box.addView(preset);
-
-        TextView rotationLabel = Ui_26_10_25.text(activity, "文案顺序", 13,
-                Ui_26_10_25.MUTED, false);
-        rotationLabel.setPadding(0, Ui_26_10_25.dp(activity, 8), 0, 0);
-        box.addView(rotationLabel);
+        Ui_26_10_25.add(box, Ui_26_10_25.hint(activity,
+                "关闭后，使用中改为轮换你写的句子。"), 4);
+        box.addView(GentleSheet_26_10_26.label(activity, "内置文案的顺序"));
         RadioGroup group = new RadioGroup(activity);
         group.setOrientation(RadioGroup.HORIZONTAL);
         int randomId = View.generateViewId();
@@ -303,35 +351,36 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         RadioButton random = new RadioButton(activity);
         random.setText("随机");
         random.setTextColor(Ui_26_10_25.INK);
+        random.setTypeface(android.graphics.Typeface.SANS_SERIF);
         random.setId(randomId);
         RadioButton sequential = new RadioButton(activity);
         sequential.setText("按顺序");
         sequential.setTextColor(Ui_26_10_25.INK);
+        sequential.setTypeface(android.graphics.Typeface.SANS_SERIF);
         sequential.setId(sequentialId);
         group.addView(random);
         group.addView(sequential);
         group.check("sequential".equals(Apps_26_10_25.rotation(activity, pkg)) ? sequentialId : randomId);
         box.addView(group);
 
-        EditText custom = new EditText(activity);
-        custom.setHint("开场用第一句；每行一句（可留空）");
-        custom.setHintTextColor(Ui_26_10_25.MUTED);
-        custom.setTextColor(Ui_26_10_25.INK);
-        custom.setTextSize(14);
-        custom.setMinLines(3);
-        custom.setGravity(Gravity.TOP);
-        custom.setText(String.join("\n", Apps_26_10_25.customEncourageMessages(activity, pkg)));
+        box.addView(GentleSheet_26_10_26.label(activity, "写给自己的话 · 每行一句"));
+        EditText custom = GentleSheet_26_10_26.input(activity,
+                String.join("\n", Apps_26_10_25.customEncourageMessages(activity, pkg)),
+                "例如：想读的话，就从这一页开始", true);
         box.addView(custom);
+        Ui_26_10_25.add(box, Ui_26_10_25.hint(activity,
+                "打开时优先显示自写句；使用中按上方设置轮换。"), 8);
 
-        new AlertDialog.Builder(activity)
-                .setTitle(Apps_26_10_25.label(activity, pkg) + " · 鼓励方式")
-                .setView(scroll)
-                .setNegativeButton("取消", null)
-                .setPositiveButton("保存", (dialog, which) -> {
-                    int minutes = 20;
-                    try {
-                        minutes = Integer.parseInt(interval.getText().toString().trim());
-                    } catch (Exception ignored) {
+        GentleSheet_26_10_26.show(activity,
+                Apps_26_10_25.label(activity, pkg) + " · 鼓励方式", box,
+                "保存", () -> {
+                    int minutes;
+                    try { minutes = Integer.parseInt(interval.getText().toString().trim()); }
+                    catch (Exception ignored) { minutes = 0; }
+                    if (minutes < 10 || minutes > 120) {
+                        interval.setError("请输入 10–120 分钟");
+                        interval.requestFocus();
+                        return false;
                     }
                     Apps_26_10_25.setEncourageInterval(activity, pkg, minutes);
                     Apps_26_10_25.setEncourageOnOpen(activity, pkg, onOpen.isChecked());
@@ -345,8 +394,23 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
                     }
                     Apps_26_10_25.setCustomEncourageMessages(activity, pkg, lines);
                     refresh();
-                })
-                .show();
+                    return true;
+                });
+    }
+
+    private android.widget.Switch encourageSwitch(String title, boolean checked) {
+        android.widget.Switch view = new android.widget.Switch(activity);
+        view.setText(title);
+        view.setTextSize(15);
+        view.setTextColor(Ui_26_10_25.INK);
+        view.setTypeface(android.graphics.Typeface.SANS_SERIF);
+        view.setChecked(checked);
+        view.setMinHeight(Ui_26_10_25.dp(activity, 52));
+        view.setPadding(Ui_26_10_25.dp(activity, 12), 0,
+                Ui_26_10_25.dp(activity, 12), 0);
+        view.setBackground(Ui_26_10_25.roundStroke(activity, Color.WHITE,
+                Ui_26_10_25.LINE, 14));
+        return view;
     }
 
     private void renderApps() {
@@ -431,47 +495,67 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
     private void showDefaultDialog(String pkg) {
         String name = Apps_26_10_25.label(activity, pkg);
         int current = Apps_26_10_25.defaultMinutes(activity, pkg);
-        String[] items = {"3 分钟", "10 分钟", "30 分钟", "自定义…"};
-        int checked = current == 3 ? 0 : current == 10 ? 1 : current == 30 ? 2 : 3;
-        new AlertDialog.Builder(activity)
-                .setTitle("“" + name + "”默认使用多久？")
-                .setSingleChoiceItems(items, checked, (dialog, which) -> {
-                    dialog.dismiss();
-                    if (which == 3) askCustomDefault(pkg, current);
-                    else {
-                        Apps_26_10_25.setDefaultMinutes(activity, pkg, which == 0 ? 3 : which == 1 ? 10 : 30);
-                        refresh();
-                    }
-                })
-                .setNegativeButton("取消", null)
-                .show();
-    }
-
-    private void askCustomDefault(String pkg, int current) {
-        EditText input = new EditText(activity);
+        LinearLayout body = Ui_26_10_25.vertical(activity);
+        body.addView(Ui_26_10_25.hint(activity,
+                "下次打开时默认选中；每一次仍可临时改。"));
+        body.addView(GentleSheet_26_10_26.label(activity, "常用时长"));
+        LinearLayout choices = Ui_26_10_25.horizontal(activity);
+        int[] values = {3, 10, 30};
+        int[] selected = {current == 3 || current == 10 || current == 30 ? current : 0};
+        android.widget.Button[] buttons = new android.widget.Button[3];
+        for (int i = 0; i < values.length; i++) {
+            final int value = values[i];
+            buttons[i] = Ui_26_10_25.pill(activity, value + " 分钟", selected[0] == value);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0,
+                    Ui_26_10_25.dp(activity, 48), 1f);
+            if (i > 0) lp.leftMargin = Ui_26_10_25.dp(activity, 8);
+            choices.addView(buttons[i], lp);
+        }
+        body.addView(choices);
+        body.addView(GentleSheet_26_10_26.label(activity, "自定义 · 1–180 分钟"));
+        EditText input = GentleSheet_26_10_26.input(activity,
+                selected[0] == 0 ? String.valueOf(current) : "", "例如 15", false);
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
-        input.setHint("1–180 分钟");
-        input.setText(String.valueOf(current));
-        input.setPadding(Ui_26_10_25.dp(activity, 20), Ui_26_10_25.dp(activity, 8),
-                Ui_26_10_25.dp(activity, 20), Ui_26_10_25.dp(activity, 8));
-        new AlertDialog.Builder(activity)
-                .setTitle("自定义默认时长")
-                .setView(input)
-                .setNegativeButton("取消", null)
-                .setPositiveButton("保存", (dialog, which) -> {
-                    int minutes;
-                    try {
-                        minutes = Integer.parseInt(input.getText().toString().trim());
-                    } catch (Exception e) {
-                        minutes = 0;
+        body.addView(input);
+        input.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) selected[0] = 0;
+            for (int j = 0; j < buttons.length; j++) {
+                buttons[j].setBackground(Ui_26_10_25.ripple(activity,
+                        selected[0] == values[j] ? Ui_26_10_25.GREEN
+                                : Ui_26_10_25.GREEN_SOFT, 999));
+                buttons[j].setTextColor(selected[0] == values[j]
+                        ? Color.WHITE : Ui_26_10_25.GREEN);
+            }
+        });
+        for (int i = 0; i < buttons.length; i++) {
+            final int value = values[i];
+            buttons[i].setOnClickListener(v -> {
+                selected[0] = value;
+                input.clearFocus();
+                for (int j = 0; j < buttons.length; j++) {
+                    buttons[j].setBackground(Ui_26_10_25.ripple(activity,
+                            value == values[j] ? Ui_26_10_25.GREEN
+                                    : Ui_26_10_25.GREEN_SOFT, 999));
+                    buttons[j].setTextColor(value == values[j]
+                            ? Color.WHITE : Ui_26_10_25.GREEN);
+                }
+            });
+        }
+        GentleSheet_26_10_26.show(activity, name + " · 默认使用多久", body,
+                "保存", () -> {
+                    int minutes = selected[0];
+                    if (minutes == 0) {
+                        try { minutes = Integer.parseInt(input.getText().toString().trim()); }
+                        catch (Exception ignored) { minutes = 0; }
                     }
                     if (minutes < 1 || minutes > 180) {
-                        Ui_26_10_25.toast(activity, "请输入 1–180 分钟");
-                        return;
+                        input.setError("请输入 1–180 分钟");
+                        input.requestFocus();
+                        return false;
                     }
                     Apps_26_10_25.setDefaultMinutes(activity, pkg, minutes);
                     refresh();
-                })
-                .show();
+                    return true;
+                });
     }
 }
