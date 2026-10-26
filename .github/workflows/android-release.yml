@@ -53,8 +53,10 @@ jobs:
         run: |
           mkdir -p dist
           cp app/build/outputs/apk/release/app-release.apk "dist/yinianjian_${GITHUB_REF_NAME}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "dist/yinianjian-latest.apk"
           cd dist
           sha256sum "yinianjian_${GITHUB_REF_NAME}.apk" > "yinianjian_${GITHUB_REF_NAME}.sha256"
+          sha256sum "yinianjian-latest.apk" > "yinianjian-latest.sha256"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
@@ -65,3 +67,5 @@ jobs:
           files: |
             dist/yinianjian_${{ github.ref_name }}.apk
             dist/yinianjian_${{ github.ref_name }}.sha256
+            dist/yinianjian-latest.apk
+            dist/yinianjian-latest.sha256
