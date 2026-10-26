@@ -52,9 +52,9 @@ jobs:
       - name: Prepare artifacts
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/release/app-release.apk "dist/一念间_${GITHUB_REF_NAME}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "dist/yinianjian_${GITHUB_REF_NAME}.apk"
           cd dist
-          sha256sum "一念间_${GITHUB_REF_NAME}.apk" > "一念间_${GITHUB_REF_NAME}.sha256"
+          sha256sum "yinianjian_${GITHUB_REF_NAME}.apk" > "yinianjian_${GITHUB_REF_NAME}.sha256"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -63,5 +63,5 @@ jobs:
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
           files: |
-            dist/一念间_${{ github.ref_name }}.apk
-            dist/一念间_${{ github.ref_name }}.sha256
+            dist/yinianjian_${{ github.ref_name }}.apk
+            dist/yinianjian_${{ github.ref_name }}.sha256
