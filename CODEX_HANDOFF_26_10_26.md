@@ -8,7 +8,7 @@
 
 - 本地工程：`/Users/mac/Documents/app_attention/intent-android`
 - 公开仓库：https://github.com/hetao8453-star/yinianjian
-- 当前分支：`main`，最新提交 `b31712b`
+- 当前分支：`main`（最新提交以 `git log` 为准；交接提交在其后）
 - 包名：`com.intentpause.app`
 - 版本：versionCode 5 / versionName "5.0"
 - 目标：Android 16（compileSdk/targetSdk 36，minSdk 24），真机 iQOO 12；文案面向所有 Android 用户。
