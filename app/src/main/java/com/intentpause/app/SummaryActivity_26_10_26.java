@@ -94,7 +94,7 @@ public final class SummaryActivity_26_10_26 extends AppCompatActivity {
                 "复查 " + data.controlled.reminders + " 次");
         countRow(counts, "鼓励应用", "打开 " + data.encouraged.opens + " 次",
                 "鼓励 " + data.encouraged.prompts + " 次");
-        countRow(counts, "主动停下", data.stops + " 次",
+        countRow(counts, "主动选择", data.stops + " 次",
                 "先不打开 " + data.declined + " 次");
         if (data.compare != null) Ui_26_10_25.add(counts,
                 Ui_26_10_25.hint(this, data.compare), 14);

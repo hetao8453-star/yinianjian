@@ -32,6 +32,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
     private final TextView statusTitle;
     private final TextView statusLine;
     private final TextView[] todayMetrics = new TextView[3];
+    private final LinearLayout metricsRow;
     private final Button statusButton;
     private boolean expanded;
     private boolean encourageExpanded;
@@ -50,8 +51,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
                 LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
         LinearLayout titleRow = Ui_26_10_25.horizontal(activity);
-        ImageView mascot = new ImageView(activity);
-        mascot.setImageResource(R.drawable.mascot_nuonuo_cutout);
+        ImageView mascot = new NuoNuoPoseView_26_10_27(activity);
         titleRow.addView(mascot, new LinearLayout.LayoutParams(
                 Ui_26_10_25.dp(activity, 54), Ui_26_10_25.dp(activity, 54)));
         NuoNuoGesture_26_10_26.attach(mascot);
@@ -59,7 +59,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         LinearLayout titleBox = Ui_26_10_25.vertical(activity);
         titleBox.setPadding(Ui_26_10_25.dp(activity, 10), 0, 0, 0);
         TextView brand = Ui_26_10_25.text(activity, "一念间", 28, Ui_26_10_25.INK, true);
-        brand.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
+        brand.setTypeface(Ui_26_10_25.brandTypeface(activity));
         titleBox.addView(brand);
         titleBox.addView(Ui_26_10_25.text(activity, "这一念，听自己。", 14, Ui_26_10_25.MUTED, false));
         titleRow.addView(titleBox);
@@ -90,6 +90,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
         statusCard.addView(statusLine);
 
         LinearLayout metrics = Ui_26_10_25.horizontal(activity);
+        metricsRow = metrics;
         String[] metricLabels = {"打开", "提醒", "前台分钟"};
         for (int i = 0; i < metricLabels.length; i++) {
             LinearLayout item = Ui_26_10_25.vertical(activity);
@@ -113,7 +114,6 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
                 LinearLayout.LayoutParams.MATCH_PARENT, Ui_26_10_25.dp(activity, 50));
         bp.topMargin = Ui_26_10_25.dp(activity, 14);
         statusCard.addView(statusButton, bp);
-        statusCard.setOnClickListener(v -> statusButton.performClick());
         Ui_26_10_25.add(page, statusCard, 22);
 
         LinearLayout sectionRow = Ui_26_10_25.horizontal(activity);
@@ -216,6 +216,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
                 enabled ? Ui_26_10_25.GREEN : Ui_26_10_25.WARN, 999));
         statusTitle.setText(enabled ? "提醒已开启" : "提醒待开启");
         statusButton.setText(enabled ? "查看状态" : "开启提醒");
+        metricsRow.setVisibility(enabled ? View.GONE : View.VISIBLE);
         statusButton.setBackground(Ui_26_10_25.ripple(activity,
                 enabled ? Ui_26_10_25.GREEN_SOFT : Ui_26_10_25.GREEN, 14));
         statusButton.setTextColor(enabled ? Ui_26_10_25.GREEN : Color.WHITE);
@@ -309,11 +310,14 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
             if (!next) {
                 Apps_26_10_25.setEncouraged(activity, pkg, false);
                 refresh();
+                Ui_26_10_25.toast(activity, "已关闭，原来的鼓励设置仍保留");
             }
         });
         row.addView(toggle, new LinearLayout.LayoutParams(
                 Ui_26_10_25.dp(activity, 48), Ui_26_10_25.dp(activity, 28)));
-        row.setOnClickListener(v -> showEncourageDialog(pkg));
+        row.setOnClickListener(v -> activity.startActivity(
+                new Intent(activity, EncourageSettingsActivity_26_10_27.class)
+                        .putExtra(EncourageSettingsActivity_26_10_27.EXTRA_PACKAGE, pkg)));
         return row;
     }
 
@@ -488,6 +492,7 @@ public class HomeTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
                 .setPositiveButton("不再监测", (dialog, which) -> {
                     Apps_26_10_25.setSelected(activity, pkg, false);
                     refresh();
+                    Ui_26_10_25.toast(activity, "已关闭，原来的时长设置仍保留");
                 })
                 .show();
     }

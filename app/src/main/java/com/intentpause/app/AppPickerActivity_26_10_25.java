@@ -63,6 +63,10 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
         TextView done = Ui_26_10_25.action(this, "完成", this::finish);
         header.addView(done);
         root.addView(header);
+        TextView saveHint = Ui_26_10_25.hint(this, "勾选后立即保存，完成后返回。");
+        saveHint.setPadding(Ui_26_10_25.dp(this, 16), 0,
+                Ui_26_10_25.dp(this, 16), Ui_26_10_25.dp(this, 8));
+        root.addView(saveHint);
 
         if (sensitiveMode || encourageMode) {
             TextView note = Ui_26_10_25.hint(this, sensitiveMode
@@ -153,6 +157,10 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
         if (reset) {
             listContainer.removeAllViews();
             shown = 0;
+        } else if (listContainer.getChildCount() > 0) {
+            View last = listContainer.getChildAt(listContainer.getChildCount() - 1);
+            if (last.getTag() != null && "load_more".equals(last.getTag()))
+                listContainer.removeView(last);
         }
         int limit = Math.min(filtered.size(), shown + PAGE_SIZE);
         for (int i = shown; i < limit; i++) {
@@ -162,6 +170,7 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
         if (shown < filtered.size()) {
             TextView more = Ui_26_10_25.action(this,
                     "加载更多（还有 " + (filtered.size() - shown) + " 个）", () -> render(false));
+            more.setTag("load_more");
             more.setGravity(Gravity.CENTER);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, Ui_26_10_25.dp(this, 48));
@@ -194,13 +203,24 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
         LinearLayout box = Ui_26_10_25.vertical(this);
         box.setPadding(Ui_26_10_25.dp(this, 12), 0, 0, 0);
         box.addView(Ui_26_10_25.text(this, label, 15, Ui_26_10_25.INK, true));
-        box.addView(Ui_26_10_25.text(this, pkg, 11, Ui_26_10_25.MUTED, false));
+        box.setContentDescription(label + "，包名 " + pkg);
         row.addView(box, new LinearLayout.LayoutParams(0,
                 LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         CheckBox check = new CheckBox(this);
         check.setChecked(isSelected(pkg));
         check.setContentDescription((sensitiveMode ? "标记" : encourageMode ? "鼓励" : "监测") + label);
         check.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked && !sensitiveMode && Apps_26_10_25.sensitive(this, pkg)) {
+                new AlertDialog.Builder(this)
+                        .setTitle("把“" + label + "”移出敏感应用？")
+                        .setMessage("之后打开它，会按你选择的提醒或鼓励模式运行。")
+                        .setNegativeButton("先不改", (dialog, which) -> check.setChecked(false))
+                        .setPositiveButton("移出并保存", (dialog, which) -> {
+                            setSelected(pkg, true);
+                            updateCount();
+                        }).show();
+                return;
+            }
             setSelected(pkg, isChecked);
             if (sensitiveMode && isChecked) askDeleteHistory(pkg, label);
             updateCount();
@@ -208,6 +228,10 @@ public class AppPickerActivity_26_10_25 extends AppCompatActivity {
         row.addView(check, new LinearLayout.LayoutParams(
                 Ui_26_10_25.dp(this, 48), Ui_26_10_25.dp(this, 48)));
         row.setOnClickListener(v -> check.setChecked(!check.isChecked()));
+        row.setOnLongClickListener(v -> {
+            Ui_26_10_25.toast(this, pkg);
+            return true;
+        });
         return row;
     }
 

@@ -12,6 +12,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 
 /** 权限说明：逐项解释，并说明“为什么可能每次都要重新开”。 */
@@ -22,6 +23,8 @@ public class PermissionGuideActivity_26_10_25 extends AppCompatActivity {
     private TextView accessibilityState;
     private TextView notificationState;
     private TextView batteryState;
+    private TextView autostartState;
+    private boolean autostartPending;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +61,17 @@ public class PermissionGuideActivity_26_10_25 extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         refresh();
+        if (autostartPending) {
+            autostartPending = false;
+            new AlertDialog.Builder(this)
+                    .setTitle("自启动设置好了吗？")
+                    .setMessage("这里无法读取系统开关。请按你刚才看到的设置确认。")
+                    .setNegativeButton("还没有", null)
+                    .setPositiveButton("已允许", (dialog, which) -> {
+                        Perms_26_10_25.setAutostartAcknowledged(this, true);
+                        refresh();
+                    }).show();
+        }
     }
 
     private void buildSections() {
@@ -84,10 +98,11 @@ public class PermissionGuideActivity_26_10_25 extends AppCompatActivity {
         battery.addView(sectionTitle("电池优化（建议）"));
         batteryState = Ui_26_10_25.hint(this, "");
         battery.addView(batteryState);
-        battery.addView(body("可减少后台被清理的情况。这里检测的是 Android 电池优化状态，"
-                + "厂商的“后台高耗电”开关需在系统中另行查看。"));
+        battery.addView(body("可减少后台被清理。这里显示的是系统电池优化状态。"));
         battery.addView(buttonRow("去设置后台限制", () -> {
-            if (!Perms_26_10_25.requestIgnoreBatteryOptimizations(this)) {
+            if (Perms_26_10_25.ignoringBatteryOptimizations(this)) {
+                Perms_26_10_25.openAppDetails(this);
+            } else if (!Perms_26_10_25.requestIgnoreBatteryOptimizations(this)) {
                 Ui_26_10_25.toast(this, "没能打开电池设置，请到系统设置里手动找一念间");
             }
         }));
@@ -95,17 +110,14 @@ public class PermissionGuideActivity_26_10_25 extends AppCompatActivity {
 
         LinearLayout autostart = Ui_26_10_25.card(this);
         autostart.addView(sectionTitle("自启动（系统设置）"));
-        autostart.addView(body("若手机提供自启动开关，可在系统中允许一念间。"
-                + "应用无法读取这个开关；设置后请返回“我的”手动确认。"));
-        autostart.addView(buttonRow("打开自启动设置", () ->
-                Perms_26_10_25.openAutostartSettings(this)));
+        autostartState = Ui_26_10_25.hint(this, "");
+        autostart.addView(autostartState);
+        autostart.addView(body("在系统中允许后，返回这里确认。"));
+        autostart.addView(buttonRow("打开自启动设置", () -> {
+            autostartPending = true;
+            Perms_26_10_25.openAutostartSettings(this);
+        }));
         Ui_26_10_25.add(list, autostart, 10);
-
-        LinearLayout background = Ui_26_10_25.card(this);
-        background.addView(sectionTitle("后台高耗电（系统设置）"));
-        background.addView(body("部分手机另有“允许后台高耗电”开关。它与上面的电池优化状态不同，"
-                + "一念间无法自动读取；如提醒常被中断，可到系统电池设置检查。"));
-        Ui_26_10_25.add(list, background, 10);
 
         LinearLayout safety = Ui_26_10_25.card(this);
         safety.addView(sectionTitle("安全边界"));
@@ -169,6 +181,9 @@ public class PermissionGuideActivity_26_10_25 extends AppCompatActivity {
         boolean battery = Perms_26_10_25.ignoringBatteryOptimizations(this);
         batteryState.setText(battery ? "当前：已忽略电池优化" : "当前：仍受系统电池策略管理");
         batteryState.setTextColor(battery ? Ui_26_10_25.GREEN : Ui_26_10_25.WARN);
+        boolean acknowledged = Perms_26_10_25.autostartAcknowledged(this);
+        autostartState.setText(acknowledged ? "当前：已允许（手动确认）" : "当前：尚未确认");
+        autostartState.setTextColor(acknowledged ? Ui_26_10_25.GREEN : Ui_26_10_25.WARN);
     }
 
     private void askNotifications() {

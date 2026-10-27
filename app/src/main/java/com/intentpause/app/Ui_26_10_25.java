@@ -18,6 +18,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.core.graphics.Insets;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -25,12 +26,12 @@ import androidx.core.view.WindowInsetsControllerCompat;
 
 /** 共享的颜色、字号、间距与常用控件，避免每个页面重复写样式。 */
 public final class Ui_26_10_25 {
-    public static final int PAPER = Color.rgb(243, 241, 231);
-    public static final int CARD = Color.rgb(251, 249, 241);
-    public static final int INK = Color.rgb(42, 49, 42);
+    public static final int PAPER = Color.rgb(247, 246, 242);
+    public static final int CARD = Color.rgb(255, 253, 249);
+    public static final int INK = Color.rgb(41, 55, 47);
     public static final int MUTED = Color.rgb(98, 108, 98);
-    public static final int GREEN = Color.rgb(79, 122, 94);
-    public static final int GREEN_SOFT = Color.rgb(230, 237, 227);
+    public static final int GREEN = Color.rgb(70, 116, 93);
+    public static final int GREEN_SOFT = Color.rgb(231, 240, 229);
     public static final int GREEN_TINT = Color.rgb(238, 243, 234);
     public static final int LINE = Color.rgb(222, 223, 213);
     public static final int WARN = Color.rgb(168, 121, 66);
@@ -108,8 +109,14 @@ public final class Ui_26_10_25 {
 
     public static TextView title(Context c, CharSequence s) {
         TextView title = text(c, s, 26, INK, true);
-        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        title.setTypeface(brandTypeface(c));
         return title;
+    }
+
+    /** 只用于内置短标题；正文和用户输入使用清晰的系统字体。 */
+    public static Typeface brandTypeface(Context c) {
+        Typeface font = ResourcesCompat.getFont(c, R.font.kn_maiyuan);
+        return font == null ? Typeface.DEFAULT_BOLD : font;
     }
 
     public static TextView subtitle(Context c, CharSequence s) {
@@ -118,6 +125,7 @@ public final class Ui_26_10_25 {
 
     public static TextView section(Context c, CharSequence s) {
         TextView v = text(c, s, 18, INK, true);
+        v.setTypeface(brandTypeface(c));
         v.setPadding(0, dp(c, 6), 0, 0);
         return v;
     }
@@ -227,11 +235,25 @@ public final class Ui_26_10_25 {
     }
 
     public static void nodOnce(View view) {
-        if (view == null || reduceMotion(view.getContext())) return;
+        if (view == null) return;
+        view.animate().cancel();
+        if (reduceMotion(view.getContext())) {
+            view.setSelected(true);
+            view.postDelayed(() -> view.setSelected(false), 250);
+            return;
+        }
         view.setPivotX(view.getWidth() / 2f);
         view.setPivotY(view.getHeight());
-        view.animate().rotation(7f).setDuration(160)
-                .withEndAction(() -> view.animate().rotation(0f).setDuration(210).start())
+        view.animate().rotation(9f).scaleX(0.94f).scaleY(0.94f)
+                .translationY(dp(view.getContext(), 5)).setDuration(140)
+                .withEndAction(() -> view.animate().rotation(-5f)
+                        .scaleX(1.08f).scaleY(1.08f).translationY(-dp(view.getContext(), 3))
+                        .setDuration(200)
+                        .withEndAction(() -> view.animate().rotation(0f)
+                                .scaleX(1f).scaleY(1f).translationY(0f)
+                                .setDuration(300)
+                                .setInterpolator(new android.view.animation.OvershootInterpolator(0.45f))
+                                .start()).start())
                 .start();
     }
 

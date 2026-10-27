@@ -49,6 +49,11 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".EncourageSettingsActivity_26_10_27"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".PermissionGuideActivity_26_10_25"
             android:exported="false" />
 

@@ -7,6 +7,7 @@ import android.view.Gravity;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import androidx.appcompat.app.AlertDialog;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -102,11 +103,20 @@ public final class NuoNuoNotes_26_10_26 {
         Dialog[] sheet = new Dialog[1];
         if (current != null) {
             TextView delete = Ui_26_10_25.action(activity, "删除这张纸条", () -> {
-                JSONArray next = new JSONArray();
-                for (int i = 0; i < notes.length(); i++) if (i != index) next.put(notes.opt(i));
-                save(activity, next);
-                sheet[0].dismiss();
-                Ui_26_10_25.toast(activity, "纸条已删除");
+                new AlertDialog.Builder(activity)
+                        .setTitle("删除这张纸条？")
+                        .setMessage("删除后无法找回。")
+                        .setNegativeButton("保留", null)
+                        .setPositiveButton("删除", (dialog, which) -> {
+                            JSONArray next = new JSONArray();
+                            for (int i = 0; i < notes.length(); i++)
+                                if (i != index) next.put(notes.opt(i));
+                            save(activity, next);
+                            sheet[0].dismiss();
+                            Ui_26_10_25.toast(activity, "纸条已删除");
+                            activity.getWindow().getDecorView().postDelayed(
+                                    () -> showMine(activity), 180);
+                        }).show();
             });
             delete.setGravity(Gravity.CENTER);
             Ui_26_10_25.add(body, delete, 12);
@@ -130,6 +140,8 @@ public final class NuoNuoNotes_26_10_26 {
                     } catch (JSONException ignored) {}
                     save(activity, notes);
                     Ui_26_10_25.toast(activity, "纸条已保存");
+                    activity.getWindow().getDecorView().postDelayed(
+                            () -> showMine(activity), 180);
                     return true;
                 });
     }

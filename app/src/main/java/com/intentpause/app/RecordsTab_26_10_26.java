@@ -63,7 +63,10 @@ public class RecordsTab_26_10_26 extends ScrollView implements Refreshable_26_10
                 Ui_26_10_25.dp(activity, 20), Ui_26_10_25.dp(activity, 32));
         addView(page, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
-        page.addView(Ui_26_10_25.text(activity, "记录", 28, Ui_26_10_25.INK, true));
+        TextView recordsTitle = Ui_26_10_25.text(activity, "记录", 28,
+                Ui_26_10_25.INK, true);
+        recordsTitle.setTypeface(Ui_26_10_25.brandTypeface(activity));
+        page.addView(recordsTitle);
         page.addView(Ui_26_10_25.hint(activity,
                 "只记录本机看到的前台切换，不读内容，不上传。"));
 
@@ -73,8 +76,10 @@ public class RecordsTab_26_10_26 extends ScrollView implements Refreshable_26_10
                 0xFFFCFAF3, Ui_26_10_25.LINE, 24));
         LinearLayout gardenHead = Ui_26_10_25.horizontal(activity);
         gardenHead.setGravity(Gravity.CENTER_VERTICAL);
-        gardenHead.addView(Ui_26_10_25.text(activity, "糯糯的花园", 19,
-                Ui_26_10_25.INK, true), new LinearLayout.LayoutParams(0,
+        TextView gardenTitle = Ui_26_10_25.text(activity, "糯糯的花园", 19,
+                Ui_26_10_25.INK, true);
+        gardenTitle.setTypeface(Ui_26_10_25.brandTypeface(activity));
+        gardenHead.addView(gardenTitle, new LinearLayout.LayoutParams(0,
                 LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         gardenCount = Ui_26_10_25.text(activity, "", 12, Ui_26_10_25.MUTED, false);
         gardenHead.addView(gardenCount);
@@ -100,12 +105,12 @@ public class RecordsTab_26_10_26 extends ScrollView implements Refreshable_26_10
         gp.topMargin = Ui_26_10_25.dp(activity, 14);
         gardenCard.addView(garden, gp);
         LinearLayout legendRow = Ui_26_10_25.horizontal(activity);
-        legendRow.addView(legendPill("✿ 四瓣花 · 主动选择", 0xFFE9EEE3),
-                new LinearLayout.LayoutParams(0, Ui_26_10_25.dp(activity, 44), 1f));
+        legendRow.addView(legendPill("四瓣花", "主动选择", false, 0xFFE9EEE3),
+                new LinearLayout.LayoutParams(0, Ui_26_10_25.dp(activity, 64), 1f));
         LinearLayout.LayoutParams budLp = new LinearLayout.LayoutParams(0,
-                Ui_26_10_25.dp(activity, 44), 1f);
+                Ui_26_10_25.dp(activity, 64), 1f);
         budLp.leftMargin = Ui_26_10_25.dp(activity, 8);
-        legendRow.addView(legendPill("✿ 五瓣花 · 鼓励打开", 0xFFF4E9E0), budLp);
+        legendRow.addView(legendPill("五瓣花", "鼓励打开", true, 0xFFF4E9E0), budLp);
         gardenLegend = legendRow;
         Ui_26_10_25.add(gardenCard, gardenLegend, 12);
         gardenRecent = Ui_26_10_25.action(activity, "查看花园里的记录",
@@ -231,11 +236,23 @@ public class RecordsTab_26_10_26 extends ScrollView implements Refreshable_26_10
         refresh();
     }
 
-    private TextView legendPill(String label, int background) {
-        TextView pill = Ui_26_10_25.text(activity, label, 12,
-                Ui_26_10_25.GREEN, true);
+    private LinearLayout legendPill(String name, String meaning, boolean encouraged,
+                                    int background) {
+        LinearLayout pill = Ui_26_10_25.vertical(activity);
         pill.setGravity(Gravity.CENTER);
-        pill.setBackground(Ui_26_10_25.round(activity, background, 12));
+        pill.setBackground(Ui_26_10_25.round(activity, background, 14));
+        LinearLayout top = Ui_26_10_25.horizontal(activity);
+        top.setGravity(Gravity.CENTER);
+        top.addView(new FlowerMark_26_10_27(activity, encouraged),
+                new LinearLayout.LayoutParams(Ui_26_10_25.dp(activity, 22),
+                        Ui_26_10_25.dp(activity, 22)));
+        TextView title = Ui_26_10_25.text(activity, name, 13, Ui_26_10_25.INK, true);
+        title.setPadding(Ui_26_10_25.dp(activity, 5), 0, 0, 0);
+        top.addView(title);
+        pill.addView(top);
+        TextView detail = Ui_26_10_25.text(activity, meaning, 12, Ui_26_10_25.MUTED, false);
+        detail.setGravity(Gravity.CENTER);
+        pill.addView(detail);
         return pill;
     }
 

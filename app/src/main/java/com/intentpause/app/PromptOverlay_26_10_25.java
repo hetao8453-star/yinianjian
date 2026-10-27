@@ -97,8 +97,7 @@ public final class PromptOverlay_26_10_25 {
                 ViewGroup.LayoutParams.MATCH_PARENT, Ui_26_10_25.dp(context, 108));
         stageLp.topMargin = Ui_26_10_25.dp(context, 16);
         content.addView(mascotStage, stageLp);
-        ImageView mascot = new ImageView(context);
-        mascot.setImageResource(R.drawable.mascot_nuonuo_cutout);
+        ImageView mascot = new NuoNuoPoseView_26_10_27(context);
         FrameLayout.LayoutParams mascotLp = new FrameLayout.LayoutParams(
                 Ui_26_10_25.dp(context, 82), Ui_26_10_25.dp(context, 82));
         mascotLp.gravity = Gravity.START | Gravity.CENTER_VERTICAL;

@@ -40,14 +40,14 @@ public class IntroActivity_26_10_26 extends AppCompatActivity {
         setContentView(scroll);
         Ui_26_10_25.applyInsets(scroll);
 
-        ImageView mascot = new ImageView(this);
-        mascot.setImageResource(R.drawable.mascot_nuonuo_cutout);
+        ImageView mascot = new NuoNuoPoseView_26_10_27(this);
+        NuoNuoGesture_26_10_26.attach(mascot);
         page.addView(mascot, new LinearLayout.LayoutParams(
                 Ui_26_10_25.dp(this, 168), Ui_26_10_25.dp(this, 168)));
         Ui_26_10_25.breathe(mascot);
 
         TextView title = Ui_26_10_25.text(this, "一念间", 32, Ui_26_10_25.INK, true);
-        title.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
+        title.setTypeface(Ui_26_10_25.brandTypeface(this));
         title.setGravity(Gravity.CENTER);
         page.addView(title);
         TextView slogan = Ui_26_10_25.text(this, "这一念，听自己。", 17,
@@ -56,12 +56,19 @@ public class IntroActivity_26_10_26 extends AppCompatActivity {
         slogan.setPadding(0, Ui_26_10_25.dp(this, 10), 0, Ui_26_10_25.dp(this, 24));
         page.addView(slogan);
 
-        LinearLayout card = Ui_26_10_25.card(this);
-        addPoint(card, "想一想", "打开选定的应用时，先问一句：这次想做什么？");
-        addPoint(card, "用自己的节奏", "想放松就放松，想学习就学习；到约定时间再看一次。");
-        addPoint(card, "也能得到鼓励", "为想多用的应用留一句话，糯糯会轻轻提醒你。");
-        addPoint(card, "只在本机", "不联网，不读屏幕内容，记录只留给自己。");
-        page.addView(card);
+        LinearLayout choices = Ui_26_10_25.horizontal(this);
+        addPoint(choices, "想一想", "打开前，问自己这次想做什么。",
+                0xFFE7F0E5, 0);
+        addPoint(choices, "给点鼓励", "想多用的应用，也可以留一句话。",
+                0xFFF5E4D8, 10);
+        page.addView(choices);
+        LinearLayout detail = Ui_26_10_25.card(this);
+        detail.addView(Ui_26_10_25.text(this, "按自己的节奏", 16,
+                Ui_26_10_25.INK, true));
+        detail.addView(Ui_26_10_25.text(this,
+                "想放松就放松，想学习就学习；到约定时间再看一次。", 14,
+                Ui_26_10_25.MUTED, false));
+        Ui_26_10_25.add(page, detail, 12);
 
         TextView mascotLine = Ui_26_10_25.text(this, "糯糯在，按你的节奏来。", 13,
                 Ui_26_10_25.MUTED, false);
@@ -80,17 +87,27 @@ public class IntroActivity_26_10_26 extends AppCompatActivity {
         lp.topMargin = Ui_26_10_25.dp(this, 6);
         page.addView(start, lp);
 
-        TextView hint = Ui_26_10_25.hint(this, "下一步会引导你开启无障碍服务；只开启这一项即可。");
+        TextView hint = Ui_26_10_25.hint(this,
+                "只在本机记录，不联网，不读屏幕内容。下一步会引导开启无障碍服务。");
         hint.setGravity(Gravity.CENTER);
         hint.setPadding(0, Ui_26_10_25.dp(this, 14), 0, 0);
         page.addView(hint);
     }
 
-    private void addPoint(LinearLayout card, String title, String body) {
+    private void addPoint(LinearLayout card, String title, String body,
+                          int color, int leftMargin) {
         LinearLayout row = Ui_26_10_25.vertical(this);
-        row.setPadding(0, Ui_26_10_25.dp(this, 8), 0, Ui_26_10_25.dp(this, 8));
+        row.setPadding(Ui_26_10_25.dp(this, 14), Ui_26_10_25.dp(this, 15),
+                Ui_26_10_25.dp(this, 14), Ui_26_10_25.dp(this, 15));
+        row.setBackground(Ui_26_10_25.round(this, color, 20));
         row.addView(Ui_26_10_25.text(this, title, 16, Ui_26_10_25.INK, true));
-        row.addView(Ui_26_10_25.text(this, body, 14, Ui_26_10_25.MUTED, false));
-        card.addView(row);
+        TextView description = Ui_26_10_25.text(this, body, 13,
+                Ui_26_10_25.MUTED, false);
+        description.setPadding(0, Ui_26_10_25.dp(this, 8), 0, 0);
+        row.addView(description);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        lp.leftMargin = Ui_26_10_25.dp(this, leftMargin);
+        card.addView(row, lp);
     }
 }

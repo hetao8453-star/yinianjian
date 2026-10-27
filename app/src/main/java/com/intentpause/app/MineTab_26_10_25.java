@@ -54,7 +54,10 @@ public class MineTab_26_10_25 extends ScrollView implements Refreshable_26_10_25
                 Ui_26_10_25.dp(activity, 22), Ui_26_10_25.dp(activity, 32));
         addView(page, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
-        page.addView(Ui_26_10_25.text(activity, "我的", 28, Ui_26_10_25.INK, true));
+        TextView mineTitle = Ui_26_10_25.text(activity, "我的", 28,
+                Ui_26_10_25.INK, true);
+        mineTitle.setTypeface(Ui_26_10_25.brandTypeface(activity));
+        page.addView(mineTitle);
         page.addView(Ui_26_10_25.hint(activity, "只在本机工作：不联网，不读屏。"));
 
         LinearLayout statusCard = Ui_26_10_25.card(activity);
